@@ -47,8 +47,13 @@
         </div>
 
         <div class="mb-3">
-            <label for="units" class="form-label">Units</label>
-            <input type="text" class="form-control" id="units" name="units">
+            <label class="form-label">Units</label>
+            <select name="units" class="form-select" required>
+                <option value="">Select Units</option>
+                {% for unit in units_list %}
+                    <option value="{{ unit }}" {% if storage and storage.units == unit %}selected{% endif %}>{{ unit }}</option>
+                {% endfor %}
+            </select>
         </div>
 
         <div class="mb-3">
