@@ -1,0 +1,25 @@
+{% extends "base.html" %}
+
+{% block title %}Error {{ status_code }} - Inventory Management System{% endblock %}
+
+{% block content %}
+<div class="row">
+    <div class="col-md-6 mx-auto text-center">
+        <div class="card">
+            <div class="card-body">
+                <h1 class="display-1 text-danger">{{ status_code }}</h1>
+                <h2 class="mb-4">Oops! Something went wrong.</h2>
+                <p class="lead">{{ detail }}</p>
+                <div class="mt-4">
+                    <a href="{{ url_for('root') }}" class="btn btn-primary">
+                        <i class="bi bi-house"></i> Go Home
+                    </a>
+                    <button onclick="history.back()" class="btn btn-secondary">
+                        <i class="bi bi-arrow-left"></i> Go Back
+                    </button>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}

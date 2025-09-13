@@ -1,0 +1,171 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <meta charset="utf-8">
+    <title>Storage Items - {{ export_date.strftime('%Y-%m-%d') }}</title>
+    <style>
+        @page {
+            size: landscape;
+            margin: 1cm;
+        }
+        body {
+            font-family: 'Helvetica', 'Arial', sans-serif;
+            font-size: 10px;
+            line-height: 1.3;
+            color: #333;
+        }
+        .header {
+            text-align: center;
+            margin-bottom: 15px;
+            border-bottom: 2px solid #28a745;
+            padding-bottom: 8px;
+        }
+        .company-name {
+            font-size: 16px;
+            font-weight: bold;
+            color: #28a745;
+        }
+        .report-title {
+            font-size: 14px;
+            font-weight: bold;
+            margin: 8px 0;
+        }
+        .report-info {
+            font-size: 10px;
+            color: #666;
+        }
+        table {
+            width: 100%;
+            border-collapse: collapse;
+            margin: 10px 0;
+            table-layout: fixed;
+            word-wrap: break-word;
+        }
+        th {
+            background-color: #f8f9fa;
+            border: 1px solid #dee2e6;
+            padding: 6px;
+            text-align: left;
+            font-weight: bold;
+            font-size: 9px;
+        }
+        td {
+            border: 1px solid #dee2e6;
+            padding: 6px;
+            font-size: 9px;
+            vertical-align: top;
+        }
+        .col-id {
+            width: 5%;
+        }
+        .col-base-name {
+            width: 12%;
+        }
+        .col-description {
+            width: 18%;
+        }
+        .col-brand {
+            width: 10%;
+        }
+        .col-dealer {
+            width: 12%;
+        }
+        .col-stock {
+            width: 8%;
+            text-align: right;
+        }
+        .col-units {
+            width: 8%;
+        }
+        .col-price {
+            width: 10%;
+            text-align: right;
+        }
+        .col-value {
+            width: 10%;
+            text-align: right;
+        }
+        .col-hsn {
+            width: 7%;
+        }
+        .total-row {
+            font-weight: bold;
+            background-color: #e9ecef;
+        }
+        .footer {
+            margin-top: 20px;
+            text-align: center;
+            font-size: 8px;
+            color: #666;
+        }
+        .text-right {
+            text-align: right;
+        }
+        .text-small {
+            font-size: 8px;
+        }
+        .page-break {
+            page-break-after: always;
+        }
+    </style>
+</head>
+<body>
+    <div class="header">
+        <div class="company-name">Inventory Management System</div>
+        <div class="report-title">{{ title }}</div>
+        <div class="report-info">
+            Exported on: {{ export_date.strftime('%Y-%m-%d at %H:%M:%S') }} | 
+            Total Items: {{ total_count }} | 
+            Total Value: {{ total_value|currency }}
+        </div>
+    </div>
+
+    <table>
+        <thead>
+            <tr>
+                <th class="col-id">ID</th>
+                <th class="col-base-name">Base Name</th>
+                <th class="col-description">Description</th>
+                <th class="col-brand">Brand</th>
+                <th class="col-dealer">Dealer</th>
+                <th class="col-stock">Stock</th>
+                <th class="col-units">Units</th>
+                <th class="col-price">Price</th>
+                <th class="col-value">Value</th>
+                <th class="col-hsn">HSN Code</th>
+            </tr>
+        </thead>
+        <tbody>
+            {% for storage in storages %}
+            <tr>
+                <td class="col-id">{{ storage.id }}</td>
+                <td class="col-base-name">{{ storage.base_name }}</td>
+                <td class="col-description">{{ storage.defined_name_with_spec or 'N/A' }}</td>
+                <td class="col-brand">{{ storage.brand or 'N/A' }}</td>
+                <td class="col-dealer">{{ storage.dealer.name if storage.dealer else 'N/A' }}</td>
+                <td class="col-stock text-right">{{ storage.current_stock }}</td>
+                <td class="col-units">{{ storage.units or 'N/A' }}</td>
+                <td class="col-price text-right">{{ storage.price|currency }}</td>
+                <td class="col-value text-right">
+                    {% if storage.price and storage.current_stock %}
+                        {{ (storage.price * storage.current_stock)|currency }}
+                    {% else %}
+                        N/A
+                    {% endif %}
+                </td>
+                <td class="col-hsn">{{ storage.hsn_code or 'N/A' }}</td>
+            </tr>
+            {% endfor %}
+            <tr class="total-row">
+                <td colspan="8" class="text-right">Total Value:</td>
+                <td class="col-value text-right">{{ total_value|currency }}</td>
+                <td class="col-hsn"></td>
+            </tr>
+        </tbody>
+    </table>
+
+    <div class="footer">
+        Generated by Inventory Management System | Page 1 of 1
+    </div>
+</body>
+</html>

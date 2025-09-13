@@ -1,0 +1,53 @@
+{% extends "base.html" %}
+
+{% block title %}Dealers - Inventory Management System{% endblock %}
+
+{% block content %}
+<div class="d-flex justify-content-between align-items-center mb-3">
+    <h1>Dealers</h1>
+    <div>
+        <a href="/dealers/add" class="btn btn-success me-2">Add New Dealer</a>
+        <a href="/dealers/export" class="btn btn-info">
+            <i class="bi bi-file-earmark-pdf"></i> Export
+        </a>
+    </div>
+</div>
+
+<!-- Search Form -->
+<form class="d-flex mb-3" method="GET" action="/dealers">
+    <input class="form-control me-2" type="search" placeholder="Search dealers..." name="q" value="{{ search_query }}">
+    <button class="btn btn-outline-primary" type="submit">Search</button>
+</form>
+
+<div class="table-responsive">
+    <table class="table table-striped">
+        <thead>
+            <tr>
+                <th>Name</th>
+                <th>City</th>
+                <th>Mobile</th>
+                <th>Email</th>
+                <th>GST No</th>
+            </tr>
+        </thead>
+        <tbody>
+            {% for dealer in dealers %}
+            <tr>
+                <td>{{dealer.name}}</td>
+                <td>{{ dealer.city }}</td>
+                <td>{{ dealer.mobile }}</td>
+                <td>{{ dealer.email }}</td>
+                <td>{{ dealer.gst_no }}</td>
+                <td>
+                    <a href="/dealers/details/{{ dealer.id }}" class="btn btn-info btn-sm">View Details</a>
+                </td>
+            </tr>
+            {% else %}
+            <tr>
+                <td colspan="5" class="text-center">No dealers found.</td>
+            </tr>
+            {% endfor %}
+        </tbody>
+    </table>
+</div>
+{% endblock %}

@@ -1,0 +1,66 @@
+{% extends "base.html" %}
+
+{% block title %}Storage - Inventory Management System{% endblock %}
+
+{% block content %}
+<div class="d-flex justify-content-between align-items-center mb-3">
+    <h1>Storage Items</h1>
+    <div>
+        <a href="/storage/add" class="btn btn-success me-2">Add New Storage Item</a>
+        <a href="/storage/export" class="btn btn-info">
+            <i class="bi bi-file-earmark-pdf"></i> Export
+        </a>
+    </div>
+</div>
+
+<!-- Search Form -->
+<form class="d-flex mb-3" method="GET" action="/storage">
+    <input class="form-control me-2" type="search" placeholder="Search storage items..." name="q" value="{{ search_query }}">
+    <button class="btn btn-outline-primary" type="submit">Search</button>
+</form>
+
+<div class="table-responsive">
+    <table class="table table-striped">
+        <thead>
+            <tr>
+                <th>Base Name</th>
+                <th>Defined Name with Spec</th>
+                <th>Brand</th>
+                <th>HSN Code</th>
+                <th>Dealer</th>
+                <th>Tax</th>
+                <th>Current Stock</th>
+                <th>Units</th>
+                <th>Price</th>
+                <th>Actions</th>
+            </tr>
+        </thead>
+        <tbody>
+            {% for storage in storages %}
+            <tr>
+                <td>{{ storage.base_name }}</td>
+                <td>{{ storage.defined_name_with_spec }}</td>
+                <td>{{ storage.brand }}</td>
+                <td>{{ storage.hsn_code }}</td>
+                <td>{{ storage.dealer.name if storage.dealer else 'N/A' }}</td>
+                <td>{{ storage.tax }}</td>
+                <td>{{ storage.current_stock }}</td>
+                <td>{{ storage.units }}</td>
+                <td>{{ storage.price }}</td>
+                <td>
+                    <a href="/storage/details/{{ storage.id }}" class="btn btn-sm btn-info">Details</a>
+                    <!-- <a href="/storage/edit/{{ storage.id }}" class="btn btn-sm btn-warning">Edit</a>
+                    <form action="/storage/delete/{{ storage.id }}" method="POST" style="display:inline;">
+                        <button type="submit" class="btn btn-sm btn-danger" onclick="return confirm('Are you sure?')">Delete</button>
+                    </form> -->
+                </td>
+            </tr>
+            {% else %}
+            <tr>
+                <td colspan="8" class="text-center">No storage items found.</td>
+            </tr>
+            {% endfor %}
+        </tbody>
+    </table>
+</div>
+{% endblock %}

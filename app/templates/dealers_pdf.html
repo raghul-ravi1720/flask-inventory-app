@@ -1,0 +1,76 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>Dealers List - PDF</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            margin: 20px;
+            font-size: 12px;
+        }
+        h1 {
+            text-align: center;
+            margin-bottom: 20px;
+        }
+        table {
+            width: 100%;
+            border-collapse: collapse;
+            margin-top: 10px;
+        }
+        th, td {
+            border: 1px solid #444;
+            padding: 6px 10px;
+            text-align: left;
+            font-size: 11px;
+        }
+        th {
+            background-color: #f2f2f2;
+        }
+        tr:nth-child(even) {
+            background-color: #fafafa;
+        }
+        .footer {
+            text-align: center;
+            margin-top: 30px;
+            font-size: 10px;
+            color: #666;
+        }
+    </style>
+</head>
+<body>
+    <h1>Dealers List</h1>
+    <table>
+        <thead>
+            <tr>
+                <th>Name</th>
+                <th>Address</th>
+                <th>City</th>
+                <th>Mobile</th>
+                <th>Email</th>
+                <th>GST No</th>
+            </tr>
+        </thead>
+        <tbody>
+            {% for dealer in dealers %}
+            <tr>
+                <td>{{ dealer.name }}</td>
+                <td>{{ dealer.address or '' }}</td>
+                <td>{{ dealer.city or '' }}</td>
+                <td>{{ dealer.mobile or '' }}</td>
+                <td>{{ dealer.email or '' }}</td>
+                <td>{{ dealer.gst_no or '' }}</td>
+            </tr>
+            {% else %}
+            <tr>
+                <td colspan="6" style="text-align:center;">No dealers available</td>
+            </tr>
+            {% endfor %}
+        </tbody>
+    </table>
+
+    <div class="footer">
+        Generated on {{ current_date }}
+    </div>
+</body>
+</html>

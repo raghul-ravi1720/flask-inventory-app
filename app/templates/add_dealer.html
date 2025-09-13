@@ -1,0 +1,81 @@
+{% extends "base.html" %}
+
+{% block title %}Add Dealer{% endblock %}
+
+{% block content %}
+<div class="container mt-4">
+    <h2>Add New Dealer</h2>
+    <form method="post" action="/dealers/add" enctype="application/x-www-form-urlencoded">
+        <div class="mb-3">
+            <label class="form-label">Name *</label>
+            <input type="text" name="name" class="form-control" required>
+        </div>
+
+        <div class="mb-3">
+            <label class="form-label">Address</label>
+            <input type="text" name="address" class="form-control">
+        </div>
+
+        <div class="row">
+            <div class="col-md-4 mb-3">
+                <label class="form-label">City</label>
+                <input type="text" name="city" class="form-control">
+            </div>
+            <div class="col-md-4 mb-3">
+                <label class="form-label">State</label>
+                <input type="text" name="state" class="form-control">
+            </div>
+            <div class="col-md-4 mb-3">
+                <label class="form-label">Country</label>
+                <input type="text" name="country" class="form-control">
+            </div>
+        </div>
+
+        <div class="row">
+            <div class="col-md-4 mb-3">
+                <label class="form-label">Pincode</label>
+                <input type="text" name="pincode" class="form-control">
+            </div>
+            <div class="col-md-4 mb-3">
+                <label class="form-label">Telephone</label>
+                <input type="text" name="telephone" class="form-control">
+            </div>
+            <div class="col-md-4 mb-3">
+                <label class="form-label">Mobile</label>
+                <input type="text" name="mobile" class="form-control">
+            </div>
+        </div>
+
+        <div class="mb-3">
+            <label class="form-label">Email</label>
+            <input type="email" name="email" class="form-control">
+        </div>
+
+        <div class="mb-3">
+            <label class="form-label">GST No</label>
+            <input type="text" name="gst_no" class="form-control">
+        </div>
+
+        <h5 class="mt-4">Bank Details</h5>
+        <div class="row">
+            <div class="col-md-4 mb-3">
+                <label class="form-label">Bank Name</label>
+                <input type="text" name="bank_name" class="form-control">
+            </div>
+            <div class="col-md-4 mb-3">
+                <label class="form-label">Account No</label>
+                <input type="text" name="account_no" class="form-control">
+            </div>
+            <div class="col-md-4 mb-3">
+                <label class="form-label">IFSC Code</label>
+                <input type="text" name="ifsc_code" class="form-control">
+            </div>
+        </div>
+
+        <div class="d-flex gap-2">
+            <button type="submit" class="btn btn-success">Save</button>
+            <a href="/dealers" class="btn btn-secondary">Cancel</a>
+        </div>
+    </form>
+</div>
+{% endblock %}

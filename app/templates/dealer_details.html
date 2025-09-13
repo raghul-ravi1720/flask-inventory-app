@@ -1,0 +1,60 @@
+{% extends "base.html" %}
+
+{% block title %}Dealer Details - Inventory Management System{% endblock %}
+
+{% block content %}
+<div class="container mt-4">
+    <h2>{{ dealer.name }}</h2>
+    <p class="text-muted">Dealer Information</p>
+
+    <div class="card shadow-sm mb-4">
+        <div class="card-body">
+            <dl class="row">
+                <dt class="col-sm-3">Address</dt>
+                <dd class="col-sm-9">{{ dealer.address }}</dd>
+
+                <dt class="col-sm-3">City</dt>
+                <dd class="col-sm-9">{{ dealer.city }}</dd>
+
+                <dt class="col-sm-3">State</dt>
+                <dd class="col-sm-9">{{ dealer.state }}</dd>
+
+                <dt class="col-sm-3">Country</dt>
+                <dd class="col-sm-9">{{ dealer.country }}</dd>
+
+                <dt class="col-sm-3">Pincode</dt>
+                <dd class="col-sm-9">{{ dealer.pincode }}</dd>
+
+                <dt class="col-sm-3">Telephone</dt>
+                <dd class="col-sm-9">{{ dealer.telephone }}</dd>
+
+                <dt class="col-sm-3">Mobile</dt>
+                <dd class="col-sm-9">{{ dealer.mobile }}</dd>
+
+                <dt class="col-sm-3">Email</dt>
+                <dd class="col-sm-9">{{ dealer.email }}</dd>
+
+                <dt class="col-sm-3">GST No</dt>
+                <dd class="col-sm-9">{{ dealer.gst_no }}</dd>
+
+                <dt class="col-sm-3">Bank Name</dt>
+                <dd class="col-sm-9">{{ dealer.bank_name }}</dd>
+
+                <dt class="col-sm-3">Account No</dt>
+                <dd class="col-sm-9">{{ dealer.account_no }}</dd>
+
+                <dt class="col-sm-3">IFSC Code</dt>
+                <dd class="col-sm-9">{{ dealer.ifsc_code }}</dd>
+            </dl>
+        </div>
+    </div>
+
+    <div class="d-flex gap-2">
+        <a href="/dealers/edit/{{ dealer.id }}" class="btn btn-warning">Edit</a>
+        <form action="/dealers/delete/{{ dealer.id }}" method="POST" onsubmit="return confirm('Are you sure you want to delete this dealer?');">
+            <button type="submit" class="btn btn-danger">Delete</button>
+        </form>
+        <a href="/dealers" class="btn btn-secondary">Back to List</a>
+    </div>
+</div>
+{% endblock %}

@@ -1,0 +1,55 @@
+{% extends "base.html" %}
+
+{% block title %}Storage Item Details - Inventory Management System{% endblock %}
+
+{% block content %}
+<div class="container mt-4">
+    <div class="d-flex justify-content-between align-items-center mb-4">
+        <h2>Storage Item Details</h2>
+        <a href="/storage" class="btn btn-secondary">Back to Storage List</a>
+    </div>
+
+    <div class="card shadow-sm p-4">
+        <h4 class="mb-3">{{ storage.defined_name_with_spec or storage.base_name }}</h4>
+        <table class="table table-borderless">
+            <tbody>
+                <tr>
+                    <th scope="row">Base Name:</th>
+                    <td>{{ storage.base_name }}</td>
+                </tr>
+                <tr>
+                    <th scope="row">Defined Name with Spec:</th>
+                    <td>{{ storage.defined_name_with_spec or "-" }}</td>
+                </tr>
+                <tr>
+                    <th scope="row">Brand:</th>
+                    <td>{{ storage.brand or "-" }}</td>
+                </tr>
+                <tr>
+                    <th scope="row">Dealer:</th>
+                    <td>{{ storage.dealer.name if storage.dealer else "N/A" }}</td>
+                </tr>
+                <tr>
+                    <th scope="row">Current Stock:</th>
+                    <td>{{ storage.current_stock }}</td>
+                </tr>
+                <tr>
+                    <th scope="row">Units:</th>
+                    <td>{{ storage.units }}</td>
+                </tr>
+                <tr>
+                    <th scope="row">Price:</th>
+                    <td>{{ storage.price }}</td>
+                </tr>
+            </tbody>
+        </table>
+
+        <div class="d-flex justify-content-end mt-4">
+            <a href="/storage/edit/{{ storage.id }}" class="btn btn-warning me-2">Edit</a>
+            <form action="/storage/delete/{{ storage.id }}" method="POST" style="display:inline;">
+                <button type="submit" class="btn btn-danger" onclick="return confirm('Are you sure you want to delete this storage item?')">Delete</button>
+            </form>
+        </div>
+    </div>
+</div>
+{% endblock %}

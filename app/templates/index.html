@@ -1,0 +1,68 @@
+{% extends "base.html" %}
+
+{% block title %}Home - Inventory Management System{% endblock %}
+
+{% block content %}
+<div class="row">
+    <div class="col-md-8 mx-auto text-center">
+        <h1 class="display-4 mb-4">Inventory Management System</h1>
+        <p class="lead">Manage your inventory, dealers, products, and purchase orders efficiently</p>
+        
+        <div class="row mt-5">
+            <div class="col-md-4 mb-4">
+                <div class="card h-100">
+                    <div class="card-body">
+                        <i class="bi bi-people-fill display-4 text-primary"></i>
+                        <h5 class="card-title mt-3">Dealers</h5>
+                        <p class="card-text">Manage your dealers and suppliers</p>
+                        <a href="/dealers" class="btn btn-primary">View Dealers</a>
+                    </div>
+                </div>
+            </div>
+            <div class="col-md-4 mb-4">
+                <div class="card h-100">
+                    <div class="card-body">
+                        <i class="bi bi-box-seam display-4 text-success"></i>
+                        <h5 class="card-title mt-3">Storage</h5>
+                        <p class="card-text">Manage your inventory items</p>
+                        <a href="/storage" class="btn btn-success">View Storage</a>
+                    </div>
+                </div>
+            </div>
+            <div class="col-md-4 mb-4">
+                <div class="card h-100">
+                    <div class="card-body">
+                        <i class="bi bi-gear-fill display-4 text-warning"></i>
+                        <h5 class="card-title mt-3">Products</h5>
+                        <p class="card-text">Manage your products and BOMs</p>
+                        <a href="/products" class="btn btn-warning">View Products</a>
+                    </div>
+                </div>
+            </div>
+        </div>
+        
+        <div class="row mt-3">
+            <div class="col-md-6 mb-4">
+                <div class="card h-100">
+                    <div class="card-body">
+                        <i class="bi bi-clipboard-check display-4 text-info"></i>
+                        <h5 class="card-title mt-3">BOMs</h5>
+                        <p class="card-text">Manage Bills of Materials</p>
+                        <a href="/boms" class="btn btn-info">View BOMs</a>
+                    </div>
+                </div>
+            </div>
+            <div class="col-md-6 mb-4">
+                <div class="card h-100">
+                    <div class="card-body">
+                        <i class="bi bi-cart-check display-4 text-danger"></i>
+                        <h5 class="card-title mt-3">Purchase Orders</h5>
+                        <p class="card-text">Manage purchase orders</p>
+                        <a href="/purchase_orders" class="btn btn-danger">View POs</a>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}

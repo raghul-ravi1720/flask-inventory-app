@@ -1,0 +1,67 @@
+{% extends "base.html" %}
+
+{% block title %}Edit Storage Item - Inventory Management System{% endblock %}
+
+{% block content %}
+<div class="container mt-4">
+    <h2 class="mb-4">Edit Storage Item</h2>
+    <form method="POST" action="/storage/edit/{{ storage.id }}">
+        <div class="mb-3">
+            <label for="base_name" class="form-label">Base Name</label>
+            <input type="text" class="form-control" id="base_name" name="base_name" value="{{ storage.base_name }}" required>
+        </div>
+
+        <div class="mb-3">
+            <label for="defined_name_with_spec" class="form-label">Defined Name with Spec</label>
+            <input type="text" class="form-control" id="defined_name_with_spec" name="defined_name_with_spec" value="{{ storage.defined_name_with_spec }}">
+        </div>
+
+        <div class="mb-3">
+            <label for="brand" class="form-label">Brand</label>
+            <input type="text" class="form-control" id="brand" name="brand" value="{{ storage.brand }}">
+        </div>
+
+        <div class="mb-3">
+            <label for="hsn_code" class="form-label">HSN Code</label>
+            <input type="number" class="form-control" id="hsn_code" name="hsn_code">
+        </div>
+
+        <div class="mb-3">
+            <label for="dealer_id" class="form-label">Dealer</label>
+            <select class="form-select" id="dealer_id" name="dealer_id">
+                <option value="">-- Select Dealer --</option>
+                {% for dealer in dealers %}
+                <option value="{{ dealer.id }}" {% if storage.dealer_id == dealer.id %}selected{% endif %}>
+                    {{ dealer.name }}
+                </option>
+                {% endfor %}
+            </select>
+        </div>
+
+        <div class="mb-3">
+            <label for="tax" class="form-label">Tax</label>
+            <input type="number" class="form-control" id="tax" name="tax">
+        </div>
+        
+        <div class="mb-3">
+            <label for="current_stock" class="form-label">Current Stock</label>
+            <input type="number" class="form-control" id="current_stock" name="current_stock" value="{{ storage.current_stock }}">
+        </div>
+
+        <div class="mb-3">
+            <label for="units" class="form-label">Units</label>
+            <input type="text" class="form-control" id="units" name="units" value="{{ storage.units }}">
+        </div>
+
+        <div class="mb-3">
+            <label for="price" class="form-label">Price</label>
+            <input type="number" class="form-control" id="price" name="price" step="0.01" value="{{ storage.price }}">
+        </div>
+
+        <div class="d-flex justify-content-between">
+            <a href="/storage" class="btn btn-secondary">Cancel</a>
+            <button type="submit" class="btn btn-warning">Update Item</button>
+        </div>
+    </form>
+</div>
+{% endblock %}
