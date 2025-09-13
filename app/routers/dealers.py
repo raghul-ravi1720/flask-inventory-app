@@ -15,6 +15,8 @@ from typing import List, Optional
 from fastapi import Form
 from typing import List
 
+from app.shared import templates  # Use shared templates with filters
+
 router = APIRouter()
 
 # API Endpoints

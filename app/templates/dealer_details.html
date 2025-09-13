@@ -4,57 +4,144 @@
 
 {% block content %}
 <div class="container mt-4">
-    <h2>{{ dealer.name }}</h2>
-    <p class="text-muted">Dealer Information</p>
+    <div class="row">
+        <!-- Left side: Dealer Information -->
+        <div class="col-md-6">
+            <div class="card shadow-sm mb-4">
+                <div class="card-header bg-primary text-white">
+                    <h4 class="mb-0">Dealer Information</h4>
+                </div>
+                <div class="card-body">
+                    <h2>{{ dealer.name }}</h2>
+                    
+                    <dl class="row">
+                        <dt class="col-sm-3">Address</dt>
+                        <dd class="col-sm-9">{{ dealer.address or 'N/A' }}</dd>
 
-    <div class="card shadow-sm mb-4">
-        <div class="card-body">
-            <dl class="row">
-                <dt class="col-sm-3">Address</dt>
-                <dd class="col-sm-9">{{ dealer.address }}</dd>
+                        <dt class="col-sm-3">City</dt>
+                        <dd class="col-sm-9">{{ dealer.city or 'N/A' }}</dd>
 
-                <dt class="col-sm-3">City</dt>
-                <dd class="col-sm-9">{{ dealer.city }}</dd>
+                        <dt class="col-sm-3">State</dt>
+                        <dd class="col-sm-9">{{ dealer.state or 'N/A' }}</dd>
 
-                <dt class="col-sm-3">State</dt>
-                <dd class="col-sm-9">{{ dealer.state }}</dd>
+                        <dt class="col-sm-3">Country</dt>
+                        <dd class="col-sm-9">{{ dealer.country or 'N/A' }}</dd>
 
-                <dt class="col-sm-3">Country</dt>
-                <dd class="col-sm-9">{{ dealer.country }}</dd>
+                        <dt class="col-sm-3">Pincode</dt>
+                        <dd class="col-sm-9">{{ dealer.pincode or 'N/A' }}</dd>
 
-                <dt class="col-sm-3">Pincode</dt>
-                <dd class="col-sm-9">{{ dealer.pincode }}</dd>
+                        <dt class="col-sm-3">Telephone</dt>
+                        <dd class="col-sm-9">{{ dealer.telephone or 'N/A' }}</dd>
 
-                <dt class="col-sm-3">Telephone</dt>
-                <dd class="col-sm-9">{{ dealer.telephone }}</dd>
+                        <dt class="col-sm-3">Mobile</dt>
+                        <dd class="col-sm-9">{{ dealer.mobile or 'N/A' }}</dd>
 
-                <dt class="col-sm-3">Mobile</dt>
-                <dd class="col-sm-9">{{ dealer.mobile }}</dd>
+                        <dt class="col-sm-3">Email</dt>
+                        <dd class="col-sm-9">{{ dealer.email or 'N/A' }}</dd>
 
-                <dt class="col-sm-3">Email</dt>
-                <dd class="col-sm-9">{{ dealer.email }}</dd>
+                        <dt class="col-sm-3">GST No</dt>
+                        <dd class="col-sm-9">{{ dealer.gst_no or 'N/A' }}</dd>
 
-                <dt class="col-sm-3">GST No</dt>
-                <dd class="col-sm-9">{{ dealer.gst_no }}</dd>
+                        <dt class="col-sm-3">Bank Name</dt>
+                        <dd class="col-sm-9">{{ dealer.bank_name or 'N/A' }}</dd>
 
-                <dt class="col-sm-3">Bank Name</dt>
-                <dd class="col-sm-9">{{ dealer.bank_name }}</dd>
+                        <dt class="col-sm-3">Account No</dt>
+                        <dd class="col-sm-9">{{ dealer.account_no or 'N/A' }}</dd>
 
-                <dt class="col-sm-3">Account No</dt>
-                <dd class="col-sm-9">{{ dealer.account_no }}</dd>
+                        <dt class="col-sm-3">IFSC Code</dt>
+                        <dd class="col-sm-9">{{ dealer.ifsc_code or 'N/A' }}</dd>
+                    </dl>
+                </div>
+            </div>
 
-                <dt class="col-sm-3">IFSC Code</dt>
-                <dd class="col-sm-9">{{ dealer.ifsc_code }}</dd>
-            </dl>
+            <div class="d-flex gap-2">
+                <a href="/dealers/edit/{{ dealer.id }}" class="btn btn-warning">Edit</a>
+                <form action="/dealers/delete/{{ dealer.id }}" method="POST" onsubmit="return confirm('Are you sure you want to delete this dealer?');">
+                    <button type="submit" class="btn btn-danger">Delete</button>
+                </form>
+                <a href="/dealers" class="btn btn-secondary">Back to List</a>
+            </div>
         </div>
-    </div>
 
-    <div class="d-flex gap-2">
-        <a href="/dealers/edit/{{ dealer.id }}" class="btn btn-warning">Edit</a>
-        <form action="/dealers/delete/{{ dealer.id }}" method="POST" onsubmit="return confirm('Are you sure you want to delete this dealer?');">
-            <button type="submit" class="btn btn-danger">Delete</button>
-        </form>
-        <a href="/dealers" class="btn btn-secondary">Back to List</a>
+        <!-- Right side: Materials from this dealer -->
+        <div class="col-md-6">
+            <div class="card shadow-sm">
+                <div class="card-header bg-success text-white">
+                    <h4 class="mb-0">Materials from this Dealer</h4>
+                    <span class="badge bg-light text-dark">{{ materials_count }} items</span>
+                </div>
+                <div class="card-body">
+                    {% if materials %}
+                        <div class="table-responsive">
+                            <table class="table table-sm table-hover">
+                                <thead>
+                                    <tr>
+                                        <th>Material Name</th>
+                                        <th>Brand</th>
+                                        <th>Stock</th>
+                                        <th>Price</th>
+                                        <th>Value</th>
+                                    </tr>
+                                </thead>
+                                <tbody>
+                                    {% for material in materials %}
+                                    <tr>
+                                        <td>
+                                            <a href="/storage/details/{{ material.id }}" class="text-decoration-none">
+                                                {{ material.base_name }}
+                                            </a>
+                                            {% if material.defined_name_with_spec %}
+                                                <br><small class="text-muted">{{ material.defined_name_with_spec }}</small>
+                                            {% endif %}
+                                        </td>
+                                        <td>{{ material.brand or 'N/A' }}</td>
+                                        <td>{{ material.current_stock }} {{ material.units or '' }}</td>
+                                        <td>{{ material.price|currency if material.price else 'N/A' }}</td>
+                                        <td>
+                                            {% if material.price and material.current_stock %}
+                                                {{ (material.price * material.current_stock)|currency }}
+                                            {% else %}
+                                                N/A
+                                            {% endif %}
+                                        </td>
+                                    </tr>
+                                    {% endfor %}
+                                </tbody>
+                                <tfoot>
+                                    <tr class="table-primary">
+                                        <td colspan="4" class="text-end"><strong>Total Inventory Value:</strong></td>
+                                        <td><strong>{{ total_value|currency }}</strong></td>
+                                    </tr>
+                                </tfoot>
+                            </table>
+                        </div>
+                    {% else %}
+                        <div class="text-center py-4 text-muted">
+                            <i class="bi bi-inbox" style="font-size: 2rem;"></i>
+                            <p class="mt-2">No materials found from this dealer.</p>
+                            <a href="/storage/add?dealer_id={{ dealer.id }}" class="btn btn-sm btn-primary">
+                                <i class="bi bi-plus-circle"></i> Add Material from this Dealer
+                            </a>
+                        </div>
+                    {% endif %}
+                </div>
+            </div>
+            
+            <!-- Quick actions -->
+            <div class="card mt-3">
+                <div class="card-body">
+                    <h6 class="card-title">Quick Actions</h6>
+                    <div class="d-grid gap-2">
+                        <a href="/storage/add?dealer_id={{ dealer.id }}" class="btn btn-sm btn-primary">
+                            <i class="bi bi-plus-circle"></i> Add Material
+                        </a>
+                        <a href="/purchase_orders/add?dealer_id={{ dealer.id }}" class="btn btn-sm btn-info">
+                            <i class="bi bi-cart-plus"></i> Create Purchase Order
+                        </a>
+                    </div>
+                </div>
+            </div>
+        </div>
     </div>
 </div>
 {% endblock %}
