@@ -1,0 +1,60 @@
+{% extends "base.html" %}
+
+{% block title %}Products - Inventory Management System{% endblock %}
+
+{% block content %}
+<div class="d-flex justify-content-between align-items-center mb-3">
+    <h1>Products</h1>
+    <div>
+        <a href="/products/add" class="btn btn-success me-2">Add New Product</a>
+        <a href="/products/export" class="btn btn-info">
+            <i class="bi bi-file-earmark-pdf"></i> Export
+        </a>
+    </div>
+</div>
+
+<!-- Search Form -->
+<form class="d-flex mb-3" method="GET" action="/products">
+    <input class="form-control me-2" type="search" placeholder="Search products..." name="q" value="{{ search_query }}">
+    <button class="btn btn-outline-primary" type="submit">Search</button>
+</form>
+
+<div class="table-responsive">
+    <table class="table table-striped">
+        <thead>
+            <tr>
+                <th>Name</th>
+                <th>Description</th>
+                <th>Section</th>
+                <th>Materials</th>
+                <th>Actions</th>
+            </tr>
+        </thead>
+        <tbody>
+            {% for product in products %}
+            <tr>
+                <td>{{ product.product_name }}</td>
+                <td>{{ product.product_description|truncate(30) if product.product_description else 'N/A' }}</td>
+                <td>{{ product.section_name or 'N/A' }}</td>
+                <td>
+                    {% if product.product_materials %}
+                        {{ product.product_materials|length }} materials
+                    {% else %}
+                        No materials
+                    {% endif %}
+                </td>
+                <td>
+                    <a href="/products/details/{{ product.id }}" class="btn btn-sm btn-primary">
+                        View Details
+                    </a>
+                </td>
+            </tr>
+            {% else %}
+            <tr>
+                <td colspan="5" class="text-center">No products found.</td>
+            </tr>
+            {% endfor %}
+        </tbody>
+    </table>
+</div>
+{% endblock %}

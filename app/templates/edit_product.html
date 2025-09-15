@@ -1,0 +1,248 @@
+{% extends "base.html" %}
+
+{% block title %}Edit Product - Inventory Management System{% endblock %}
+
+{% block content %}
+<div class="container mt-4">
+    <h2>Edit Product: {{ product.product_name }}</h2>
+    
+    {% if error %}
+    <div class="alert alert-danger">{{ error }}</div>
+    {% endif %}
+    
+    <form method="post" action="/products/edit/{{ product.id }}" id="productForm">
+        <div class="card mb-4">
+            <div class="card-header bg-primary text-white">
+                <h5 class="mb-0">Product Information</h5>
+            </div>
+            <div class="card-body">
+                <div class="row">
+                    <div class="col-md-6 mb-3">
+                        <label class="form-label">Product Name *</label>
+                        <input type="text" name="product_name" class="form-control" value="{{ product.product_name }}" required>
+                    </div>
+                    <div class="col-md-6 mb-3">
+                        <label class="form-label">Section Name</label>
+                        <input type="text" name="section_name" class="form-control" value="{{ product.section_name }}">
+                    </div>
+                    <div class="col-12 mb-3">
+                        <label class="form-label">Product Description</label>
+                        <textarea name="product_description" class="form-control" rows="3">{{ product.product_description }}</textarea>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <div class="card mb-4">
+            <div class="card-header bg-success text-white">
+                <h5 class="mb-0">Raw Materials</h5>
+            </div>
+            <div class="card-body">
+                <div class="mb-3">
+                    <label class="form-label">Search and Add Materials</label>
+                    <div class="input-group">
+                        <input type="text" id="materialSearch" class="form-control" placeholder="Search materials...">
+                        <button type="button" class="btn btn-primary" id="searchButton">Search</button>
+                    </div>
+                </div>
+                
+                <div id="searchResults" class="mb-3" style="max-height: 200px; overflow-y: auto; display: none;">
+                    <div class="list-group" id="materialResultsList"></div>
+                </div>
+                
+                <div class="table-responsive">
+                    <table class="table table-striped" id="materialsTable">
+                        <thead>
+                            <tr>
+                                <th>Material</th>
+                                <th>Brand</th>
+                                <th>Dealer</th>
+                                <th>Quantity Needed</th>
+                                <th>Action</th>
+                            </tr>
+                        </thead>
+                        <tbody id="selectedMaterials">
+                            {% for pm in product.product_materials %}
+                            <tr id="material-{{ pm.storage_id }}">
+                                <td>
+                                    <input type="hidden" name="material_ids" value="{{ pm.storage_id }}">
+                                    {{ storage_map[pm.storage_id].base_name }}
+                                    {% if storage_map[pm.storage_id].defined_name_with_spec %}
+                                        <br><small class="text-muted">{{ storage_map[pm.storage_id].defined_name_with_spec }}</small>
+                                    {% endif %}
+                                </td>
+                                <td>{{ storage_map[pm.storage_id].brand or 'N/A' }}</td>
+                                <td>{{ storage_map[pm.storage_id].dealer.name if storage_map[pm.storage_id].dealer else 'N/A' }}</td>
+                                <td>
+                                    <input type="number" name="quantities" class="form-control form-control-sm" 
+                                           value="{{ pm.quantity_needed }}" min="1" required>
+                                </td>
+                                <td>
+                                    <button type="button" class="btn btn-sm btn-danger remove-material" data-material-id="{{ pm.storage_id }}">
+                                        Remove
+                                    </button>
+                                </td>
+                            </tr>
+                            {% else %}
+                            <tr id="noMaterialsMessage">
+                                <td colspan="5" class="text-center text-muted py-3">
+                                    No materials selected. Search and add materials above.
+                                </td>
+                            </tr>
+                            {% endfor %}
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+        </div>
+
+        <div class="d-flex gap-2">
+            <button type="submit" class="btn btn-warning">Update Product</button>
+            <a href="/products" class="btn btn-secondary">Cancel</a>
+        </div>
+    </form>
+</div>
+
+<!-- Embed Jinja JSON safely -->
+<script id="product-materials-data" type="application/json">
+  {{ product_materials | tojson }}
+</script>
+<script id="storage-map-data" type="application/json">
+  {{ storage_map | tojson }}
+</script>
+
+
+<script>
+document.addEventListener('DOMContentLoaded', function() {
+    const materialSearch = document.getElementById('materialSearch');
+    const searchButton = document.getElementById('searchButton');
+    const searchResults = document.getElementById('searchResults');
+    const materialResultsList = document.getElementById('materialResultsList');
+    const selectedMaterials = document.getElementById('selectedMaterials');
+    const noMaterialsMessage = document.getElementById('noMaterialsMessage');
+    const productForm = document.getElementById('productForm');
+    
+    // Initialize with existing materials
+    const selectedMaterialsMap = new Map();
+
+    // Parse JSON from hidden script tags
+    const productMaterials = JSON.parse(document.getElementById("product-materials-data").textContent);
+    const storageMap = JSON.parse(document.getElementById("storage-map-data").textContent);
+
+    // Build selectedMaterialsMap from initial product data
+    productMaterials.forEach(pm => {
+        const storage = storageMap[pm.storage_id];
+        selectedMaterialsMap.set(pm.storage_id, {
+            id: pm.storage_id,
+            name: storage.base_name,
+            spec: storage.defined_name_with_spec || "",
+            brand: storage.brand || "N/A",
+            dealer: storage.dealer ? storage.dealer.name : "N/A"
+        });
+    });
+
+    console.log("Initial selected materials:", selectedMaterialsMap);
+
+    // 🔎 Search functionality
+    function searchMaterials() {
+        const query = materialSearch.value.trim();
+        if (query.length < 2) {
+            searchResults.style.display = 'none';
+            return;
+        }
+        
+        fetch(`/products/search_materials?q=${encodeURIComponent(query)}`)
+            .then(response => response.text())
+            .then(html => {
+                materialResultsList.innerHTML = html;
+                searchResults.style.display = 'block';
+                
+                // Attach event listeners to "Add" buttons
+                document.querySelectorAll('.add-material-btn').forEach(button => {
+                    button.addEventListener('click', function() {
+                        const materialId = this.getAttribute('data-material-id');
+                        addMaterialToTable(materialId);
+                    });
+                });
+            })
+            .catch(error => console.error('Error searching materials:', error));
+    }
+    
+    searchButton.addEventListener('click', searchMaterials);
+    materialSearch.addEventListener('keypress', function(e) {
+        if (e.key === 'Enter') {
+            e.preventDefault();
+            searchMaterials();
+        }
+    });
+    
+    // ➕ Add material to table
+    function addMaterialToTable(materialId) {
+        if (selectedMaterialsMap.has(materialId)) return;
+        
+        fetch(`/storage/api/${materialId}`)
+            .then(response => response.json())
+            .then(material => {
+                selectedMaterialsMap.set(materialId, material);
+                
+                if (noMaterialsMessage) noMaterialsMessage.style.display = 'none';
+                
+                const row = document.createElement('tr');
+                row.id = `material-${materialId}`;
+                row.innerHTML = `
+                    <td>
+                        <input type="hidden" name="material_ids" value="${materialId}">
+                        ${material.base_name}
+                        ${material.defined_name_with_spec ? `<br><small class="text-muted">${material.defined_name_with_spec}</small>` : ''}
+                    </td>
+                    <td>${material.brand || 'N/A'}</td>
+                    <td>${material.dealer_name || 'N/A'}</td>
+                    <td>
+                        <input type="number" name="quantities" class="form-control form-control-sm" value="1" min="1" required>
+                    </td>
+                    <td>
+                        <button type="button" class="btn btn-sm btn-danger remove-material" data-material-id="${materialId}">
+                            Remove
+                        </button>
+                    </td>
+                `;
+                selectedMaterials.appendChild(row);
+                
+                row.querySelector('.remove-material').addEventListener('click', function() {
+                    removeMaterialFromTable(materialId);
+                });
+                
+                searchResults.style.display = 'none';
+                materialSearch.value = '';
+            })
+            .catch(error => console.error('Error fetching material details:', error));
+    }
+    
+    // ➖ Remove material
+    function removeMaterialFromTable(materialId) {
+        selectedMaterialsMap.delete(materialId);
+        const row = document.getElementById(`material-${materialId}`);
+        if (row) row.remove();
+        
+        if (selectedMaterialsMap.size === 0 && noMaterialsMessage) {
+            noMaterialsMessage.style.display = '';
+        }
+    }
+    
+    // Attach remove listeners to existing rows
+    document.querySelectorAll('.remove-material').forEach(button => {
+        button.addEventListener('click', function() {
+            const materialId = this.getAttribute('data-material-id');
+            removeMaterialFromTable(materialId);
+        });
+    });
+    
+    // Close search results when clicking outside
+    document.addEventListener('click', function(e) {
+        if (!searchResults.contains(e.target) && e.target !== materialSearch && e.target !== searchButton) {
+            searchResults.style.display = 'none';
+        }
+    });
+});
+</script>
+{% endblock %}

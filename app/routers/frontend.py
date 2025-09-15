@@ -7,10 +7,6 @@ router = APIRouter()
 templates = Jinja2Templates(directory="app/templates")
 
 
-@router.get("/products")
-async def list_products(request: Request, db: Session = Depends(get_db)):
-    return templates.TemplateResponse("list_product.html", {"request": request})
-
 @router.get("/boms")
 async def list_boms(request: Request, db: Session = Depends(get_db)):
     return templates.TemplateResponse("list_bom.html", {"request": request})

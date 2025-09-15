@@ -6,15 +6,6 @@ import random
 
 Base = declarative_base()
 
-# Association table for Product and Storage many-to-many relationship
-product_material = Table(
-    'product_material',
-    Base.metadata,
-    Column('product_id', Integer, ForeignKey('product.id'), primary_key=True),
-    Column('storage_id', Integer, ForeignKey('storage.id'), primary_key=True),
-    Column('quantity_needed', Integer, nullable=False, default=1)
-)
-
 class Dealer(Base):
     __tablename__ = 'dealer'
     
@@ -35,6 +26,16 @@ class Dealer(Base):
     
     materials = relationship('Storage', back_populates='dealer', lazy='dynamic')
 
+class ProductMaterial(Base):
+    __tablename__ = 'product_material'
+    
+    product_id = Column(Integer, ForeignKey('product.id'), primary_key=True)
+    storage_id = Column(Integer, ForeignKey('storage.id'), primary_key=True)
+    quantity_needed = Column(Integer, nullable=False, default=1)
+
+    product = relationship('Product', back_populates='product_materials')
+    storage = relationship('Storage', back_populates='product_materials')
+
 class Product(Base):
     __tablename__ = 'product'
     
@@ -42,15 +43,11 @@ class Product(Base):
     product_name = Column(String(128), nullable=False)
     product_description = Column(Text)
     section_name = Column(String(128))
-    
-    # Many-to-many relationship with Storage through product_material table
-    materials = relationship(
-        'Storage', 
-        secondary=product_material,
-        back_populates='products'
-    )
-    
-    boms = relationship('BOM', back_populates='product')
+    created_at = Column(DateTime, default=datetime.now)
+    updated_at = Column(DateTime, default=datetime.now, onupdate=datetime.now)
+
+    product_materials = relationship('ProductMaterial', back_populates='product', cascade='all, delete-orphan')
+    boms = relationship('BOM', back_populates='product')  # Added this relationship
 
 class Storage(Base):
     __tablename__ = 'storage'
@@ -65,16 +62,11 @@ class Storage(Base):
     price = Column(Float)
     current_stock = Column(Float)
     units = Column(String(32))
+    created_at = Column(DateTime, default=datetime.now)  # Make sure this exists
+    updated_at = Column(DateTime, default=datetime.now, onupdate=datetime.now)  # And this
     
     dealer = relationship('Dealer', back_populates='materials')
-    
-    # Many-to-many relationship with Product
-    products = relationship(
-        'Product', 
-        secondary=product_material,
-        back_populates='materials'
-    )
-    
+    product_materials = relationship('ProductMaterial', back_populates='storage')
     bom_materials = relationship('BOMMaterial', back_populates='storage')
     supply_items = relationship('BOMSupplyItem', back_populates='storage')
     po_items = relationship('PurchaseOrderItem', back_populates='material')

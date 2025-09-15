@@ -1,5 +1,5 @@
 from pydantic import BaseModel, EmailStr
-from typing import Optional
+from typing import List, Optional
 from datetime import datetime
 
 # Dealer Schemas
@@ -85,3 +85,40 @@ class Product(ProductBase):
         orm_mode = True
 
 # Add similar schemas for other models as needed
+
+# Add to your existing schemas
+class ProductMaterialBase(BaseModel):
+    storage_id: int
+    quantity_needed: int
+
+class ProductMaterialCreate(ProductMaterialBase):
+    pass
+
+class ProductMaterial(ProductMaterialBase):
+    class Config:
+        orm_mode = True
+
+class ProductBase(BaseModel):
+    product_name: str
+    product_description: Optional[str] = None
+    section_name: Optional[str] = None
+
+class ProductCreate(ProductBase):
+    pass
+
+class ProductUpdate(ProductBase):
+    pass
+
+class Product(ProductBase):
+    id: int
+    created_at: datetime
+    updated_at: datetime
+    
+    class Config:
+        orm_mode = True
+
+class ProductWithMaterials(Product):
+    product_materials: List[ProductMaterial] = []
+    
+    class Config:
+        orm_mode = True
