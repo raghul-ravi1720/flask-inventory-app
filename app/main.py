@@ -176,6 +176,36 @@ except ImportError as e:
     import traceback
     traceback.print_exc()    
 
+# Add Purchase Orders router
+try:
+    from app.routers import purchase_orders
+    app.include_router(purchase_orders.router, prefix="/purchase_orders")
+    print("Purchase orders router imported successfully")
+except ImportError as e:
+    print(f"Failed to import purchase orders router: {e}")
+    import traceback
+    traceback.print_exc()
+
+# Add Company Branches router
+try:
+    from app.routers import company_branches
+    app.include_router(company_branches.router, prefix="/company_branches")
+    print("Company branches router imported successfully")
+except ImportError as e:
+    print(f"Failed to import company branches router: {e}")
+    import traceback
+    traceback.print_exc()
+
+# Add Consignees router
+try:
+    from app.routers import consignees
+    app.include_router(consignees.router, prefix="/consignees")
+    print("Consignees router imported successfully")
+except ImportError as e:
+    print(f"Failed to import consignees router: {e}")
+    import traceback
+    traceback.print_exc()
+
 # Add this after the other router imports
 try:
     from app.routers import test
@@ -198,5 +228,3 @@ except ImportError as e:
     print(f"Failed to import database modules: {e}")
 except Exception as e:
     print(f"Failed to create database tables: {e}")
-
-

@@ -1,0 +1,368 @@
+{% extends "base.html" %}
+
+{% block title %}Add Purchase Order - Inventory Management System{% endblock %}
+
+{% block content %}
+<div class="container mt-4">
+    <h2>Add New Purchase Order</h2>
+    
+    {% if error %}
+    <div class="alert alert-danger">{{ error }}</div>
+    {% endif %}
+    
+    <form method="post" action="/purchase_orders/add" id="poForm">
+        <div class="card mb-4">
+            <div class="card-header bg-primary text-white">
+                <h5 class="mb-0">Purchase Order Details</h5>
+            </div>
+            <div class="card-body">
+                <div class="row">
+                    <div class="col-md-3 mb-3">
+                        <label class="form-label">PO Number</label>
+                        <input type="text" class="form-control" value="PO-{{ next_po_number }}" readonly>
+                    </div>
+                    <div class="col-md-3 mb-3">
+                        <label class="form-label">Date</label>
+                        <input type="date" name="date" class="form-control" value="{{ current_date.strftime('%Y-%m-%d') }}" required>
+                    </div>
+                    <div class="col-md-3 mb-3">
+                        <label class="form-label">Status</label>
+                        <select name="status" class="form-select">
+                            <option value="unsent">Unsent</option>
+                            <option value="sent">Sent</option>
+                            <option value="waiting">Waiting</option>
+                            <option value="received">Received</option>
+                        </select>
+                    </div>
+                    <div class="col-md-3 mb-3">
+                        <label class="form-label">Discount (%)</label>
+                        <input type="number" name="discount" class="form-control" value="0" min="0" max="100" step="0.01">
+                    </div>
+                </div>
+                
+                <div class="row">
+                    <div class="col-md-4 mb-3">
+                        <label class="form-label">Dealer</label>
+                        <select name="dealer_id" class="form-select" id="dealerSelect" required>
+                            <option value="">Select a dealer</option>
+                            {% for dealer in dealers %}
+                            <option value="{{ dealer.id }}">{{ dealer.name }}</option>
+                            {% endfor %}
+                        </select>
+                    </div>
+                    <div class="col-md-4 mb-3">
+                        <label class="form-label">Invoice Branch</label>
+                        <select name="invoice_branch_id" class="form-select" required>
+                            <option value="">Select invoice branch</option>
+                            {% for branch in company_branches %}
+                            <option value="{{ branch.id }}">{{ branch.branch_name }}</option>
+                            {% endfor %}
+                        </select>
+                    </div>
+                    <div class="col-md-4 mb-3">
+                        <label class="form-label">Consignee</label>
+                        <select name="consignee_id" class="form-select" required>
+                            <option value="">Select consignee</option>
+                            {% for consignee in consignees %}
+                            <option value="{{ consignee.id }}">{{ consignee.branch_name }}</option>
+                            {% endfor %}
+                        </select>
+                    </div>
+                </div>
+                
+                <div class="mb-3">
+                    <label class="form-label">Notes</label>
+                    <textarea name="notes" class="form-control" rows="2"></textarea>
+                </div>
+            </div>
+        </div>
+
+        <div class="card mb-4">
+            <div class="card-header bg-success text-white d-flex justify-content-between align-items-center">
+                <h5 class="mb-0">Materials List</h5>
+                <span class="badge bg-light text-dark" id="itemsCount">0 items</span>
+            </div>
+            <div class="card-body">
+                <div class="mb-3">
+                    <label class="form-label">Search and Add Materials</label>
+                    <div class="input-group">
+                        <input type="text" id="materialSearch" class="form-control" placeholder="Search materials...">
+                        <select class="form-select" id="dealerFilter" style="max-width: 200px;">
+                            <option value="">All Dealers</option>
+                            {% for dealer in dealers %}
+                            <option value="{{ dealer.id }}">{{ dealer.name }}</option>
+                            {% endfor %}
+                        </select>
+                        <button type="button" class="btn btn-primary" id="searchButton">Search</button>
+                    </div>
+                </div>
+                
+                <div id="searchResults" class="mb-3" style="max-height: 200px; overflow-y: auto; display: none;">
+                    <div class="list-group" id="materialResultsList"></div>
+                </div>
+                
+                <div class="table-responsive">
+                    <table class="table table-striped" id="materialsTable">
+                        <thead>
+                            <tr>
+                                <th>Material</th>
+                                <th>Brand</th>
+                                <th>Dealer</th>
+                                <th>Quantity</th>
+                                <th>Unit</th>
+                                <th>Price</th>
+                                <th>Total</th>
+                                <th>Action</th>
+                            </tr>
+                        </thead>
+                        <tbody id="selectedMaterials">
+                            <tr id="noMaterialsMessage">
+                                <td colspan="8" class="text-center text-muted py-3">
+                                    No materials selected. Search and add materials above.
+                                </td>
+                            </tr>
+                        </tbody>
+                        <tfoot id="poTotals" style="display: none;">
+                            <tr>
+                                <td colspan="5" class="text-end"><strong>Subtotal:</strong></td>
+                                <td colspan="3" id="subtotal">₹0.00</td>
+                            </tr>
+                            <tr>
+                                <td colspan="5" class="text-end"><strong>Tax (10%):</strong></td>
+                                <td colspan="3" id="taxAmount">₹0.00</td>
+                            </tr>
+                            <tr>
+                                <td colspan="5" class="text-end"><strong>Discount:</strong></td>
+                                <td colspan="3" id="discountAmount">₹0.00</td>
+                            </tr>
+                            <tr class="table-primary">
+                                <td colspan="5" class="text-end"><strong>Grand Total:</strong></td>
+                                <td colspan="3" id="grandTotal">₹0.00</td>
+                            </tr>
+                        </tfoot>
+                    </table>
+                </div>
+            </div>
+        </div>
+
+        <div class="d-flex gap-2">
+            <button type="submit" class="btn btn-success">Save Purchase Order</button>
+            <a href="/purchase_orders" class="btn btn-secondary">Cancel</a>
+        </div>
+    </form>
+</div>
+
+<script>
+function escapeHtml(unsafe) {
+    return unsafe
+        .replace(/&/g, "&amp;")
+        .replace(/</g, "&lt;")
+        .replace(/>/g, "&gt;")
+        .replace(/"/g, "&quot;")
+        .replace(/'/g, "&#039;");
+}    
+document.addEventListener('DOMContentLoaded', function() {
+    const materialSearch = document.getElementById('materialSearch');
+    const dealerFilter = document.getElementById('dealerFilter');
+    const searchButton = document.getElementById('searchButton');
+    const searchResults = document.getElementById('searchResults');
+    const materialResultsList = document.getElementById('materialResultsList');
+    const selectedMaterials = document.getElementById('selectedMaterials');
+    const noMaterialsMessage = document.getElementById('noMaterialsMessage');
+    const itemsCount = document.getElementById('itemsCount');
+    const poTotals = document.getElementById('poTotals');
+    const subtotalElement = document.getElementById('subtotal');
+    const taxAmountElement = document.getElementById('taxAmount');
+    const discountAmountElement = document.getElementById('discountAmount');
+    const grandTotalElement = document.getElementById('grandTotal');
+    const discountInput = document.querySelector('input[name="discount"]');
+    const poForm = document.getElementById('poForm');
+    const dealerSelect = document.getElementById('dealerSelect');
+    
+    let selectedMaterialsMap = new Map();
+    
+    // Update dealer filter when dealer select changes
+    dealerSelect.addEventListener('change', function() {
+        dealerFilter.value = this.value;
+    });
+    
+    // Search functionality
+    function searchMaterials() {
+        const query = materialSearch.value.trim();
+        const dealerId = dealerFilter.value;
+        
+        if (query.length < 2 && !dealerId) {
+            searchResults.style.display = 'none';
+            return;
+        }
+        
+        let url = `/purchase_orders/search/materials?q=${encodeURIComponent(query)}`;
+        if (dealerId) {
+            url += `&dealer_id=${dealerId}`;
+        }
+        
+        fetch(url)
+            .then(response => response.text())
+            .then(html => {
+                materialResultsList.innerHTML = html;
+                searchResults.style.display = 'block';
+                
+                // Add event listeners to add buttons
+                document.querySelectorAll('.add-material-btn').forEach(button => {
+                    button.addEventListener('click', function() {
+                        const materialId = this.getAttribute('data-material-id');
+                        addMaterialToTable(materialId);
+                    });
+                });
+            })
+            .catch(error => {
+                console.error('Error searching materials:', error);
+            });
+    }
+    
+    searchButton.addEventListener('click', searchMaterials);
+    materialSearch.addEventListener('keypress', function(e) {
+        if (e.key === 'Enter') {
+            e.preventDefault();
+            searchMaterials();
+        }
+    });
+    
+
+    // Add material to table
+    function addMaterialToTable(materialId) {
+        if (selectedMaterialsMap.has(materialId)) return;
+        
+        fetch(`/storage/api/${materialId}`)
+            .then(response => {
+                if (!response.ok) {
+                    throw new Error('Network response was not ok');
+                }
+                return response.json();
+            })
+            .then(material => {
+                 // Escape the specification text
+                const escapedSpec = escapeHtml(material.defined_name_with_spec || '');
+                selectedMaterialsMap.set(materialId, material);
+                
+                if (noMaterialsMessage) {
+                    noMaterialsMessage.style.display = 'none';
+                }
+                if (poTotals) {
+                    poTotals.style.display = '';
+                }
+                
+                const row = document.createElement('tr');
+                row.id = `material-${materialId}`;
+                row.innerHTML = `
+                    <td>
+                        <input type="hidden" name="items[${materialId}][material_id]" value="${materialId}">
+                        <input type="hidden" name="items[${materialId}][material_name]" value="${material.base_name}">
+                        <input type="hidden" name="items[${materialId}][spec]" value="${escapedSpec}">
+                        <input type="hidden" name="items[${materialId}][brand]" value="${material.brand || ''}">
+                        <input type="hidden" name="items[${materialId}][dealer_name]" value="${material.dealer_name || ''}">
+                        ${material.base_name}
+                        ${material.defined_name_with_spec ? `<br><small class="text-muted">${material.defined_name_with_spec}</small>` : ''}
+                    <td>${material.brand || 'N/A'}</td>
+                    <td>${material.dealer_name || 'N/A'}</td>
+                    <td>
+                        <input type="number" name="items[${materialId}][quantity]" class="form-control form-control-sm quantity-input" value="1" min="1" required onchange="updateItemTotal(${materialId})">
+                    </td>
+                    <td>
+                        <input type="text" name="items[${materialId}][unit]" class="form-control form-control-sm unit-input" value="${material.units || 'Nos'}" onchange="updateItemTotal(${materialId})">
+                    </td>
+                    <td>
+                        <input type="number" name="items[${materialId}][price]" class="form-control form-control-sm price-input" value="${material.price || 0}" min="0" step="0.01" required onchange="updateItemTotal(${materialId})">
+                    </td>
+                    <td class="item-total" id="total-${materialId}">${material.price ? '₹' + (material.price * 1).toFixed(2) : '₹0.00'}</td>
+                    <td>
+                        <button type="button" class="btn btn-sm btn-danger remove-material" data-material-id="${materialId}">
+                            Remove
+                        </button>
+                    </td>
+                `;
+                selectedMaterials.appendChild(row);
+                
+                // Add event listeners
+                row.querySelector('.remove-material').addEventListener('click', function() {
+                    removeMaterialFromTable(materialId);
+                });
+                
+                // Hide search results
+                searchResults.style.display = 'none';
+                materialSearch.value = '';
+                
+                // Update totals
+                updateTotals();
+            })
+            .catch(error => {
+                console.error('Error fetching material details:', error);
+                alert('Error loading material details. Please try again.');
+            });
+    }
+    
+    // Remove material from table
+    function removeMaterialFromTable(materialId) {
+        selectedMaterialsMap.delete(materialId);
+        const row = document.getElementById(`material-${materialId}`);
+        if (row) {
+            row.remove();
+        }
+        
+        if (selectedMaterialsMap.size === 0) {
+            if (noMaterialsMessage) {
+                noMaterialsMessage.style.display = '';
+            }
+            if (poTotals) {
+                poTotals.style.display = 'none';
+            }
+        }
+        
+        // Update totals
+        updateTotals();
+    }
+    
+    // Update item total
+    window.updateItemTotal = function(materialId) {
+        const quantity = parseFloat(document.querySelector(`#material-${materialId} .quantity-input`).value) || 0;
+        const price = parseFloat(document.querySelector(`#material-${materialId} .price-input`).value) || 0;
+        const total = quantity * price;
+        
+        document.getElementById(`total-${materialId}`).textContent = '₹' + total.toFixed(2);
+        updateTotals();
+    }
+    
+    // Update all totals
+    function updateTotals() {
+        let subtotal = 0;
+        
+        selectedMaterialsMap.forEach((material, materialId) => {
+            const quantity = parseFloat(document.querySelector(`#material-${materialId} .quantity-input`).value) || 0;
+            const price = parseFloat(document.querySelector(`#material-${materialId} .price-input`).value) || 0;
+            subtotal += quantity * price;
+        });
+        
+        const discount = parseFloat(discountInput.value) || 0;
+        const taxAmount = subtotal * 0.1; // 10% tax
+        const discountAmount = subtotal * (discount / 100);
+        const grandTotal = subtotal + taxAmount - discountAmount;
+        
+        subtotalElement.textContent = '₹' + subtotal.toFixed(2);
+        taxAmountElement.textContent = '₹' + taxAmount.toFixed(2);
+        discountAmountElement.textContent = '₹' + discountAmount.toFixed(2);
+        grandTotalElement.textContent = '₹' + grandTotal.toFixed(2);
+        itemsCount.textContent = selectedMaterialsMap.size + ' items';
+    }
+    
+    // Update totals when discount changes
+    discountInput.addEventListener('input', updateTotals);
+    
+    // Close search results when clicking outside
+    document.addEventListener('click', function(e) {
+        if (!searchResults.contains(e.target) && e.target !== materialSearch && e.target !== searchButton && e.target !== dealerFilter) {
+            searchResults.style.display = 'none';
+        }
+    });
+});
+</script>
+{% endblock %}

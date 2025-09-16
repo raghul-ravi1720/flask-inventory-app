@@ -1,0 +1,124 @@
+{% extends "base.html" %}
+
+{% block title %}Purchase Orders - Inventory Management System{% endblock %}
+
+{% block content %}
+<div class="d-flex justify-content-between align-items-center mb-3">
+    <h1>Purchase Orders</h1>
+    <div>
+        <a href="/purchase_orders/add" class="btn btn-success me-2">Add New Purchase Order</a>
+        <div class="btn-group">
+            <a href="/purchase_orders/export/pdf?status={{ status_filter }}&branch={{ branch_filter }}" 
+               class="btn btn-outline-danger">
+                <i class="bi bi-file-earmark-pdf"></i> Export PDF
+            </a>
+        </div>
+    </div>
+</div>
+
+<!-- Filter Section -->
+<div class="card mb-4">
+    <div class="card-header bg-light">
+        <h5 class="mb-0">Filter Purchase Orders</h5>
+    </div>
+    <div class="card-body">
+        <form class="row g-3" method="GET">
+            <div class="col-md-4">
+                <label class="form-label">Search</label>
+                <input type="text" class="form-control" name="q" placeholder="Search..." value="{{ search_query }}">
+            </div>
+            <div class="col-md-3">
+                <label class="form-label">Status</label>
+                <select class="form-select" name="status">
+                    <option value="">All Status</option>
+                    <option value="unsent" {% if status_filter == 'unsent' %}selected{% endif %}>Unsent</option>
+                    <option value="sent" {% if status_filter == 'sent' %}selected{% endif %}>Sent</option>
+                    <option value="waiting" {% if status_filter == 'waiting' %}selected{% endif %}>Waiting</option>
+                    <option value="received" {% if status_filter == 'received' %}selected{% endif %}>Received</option>
+                </select>
+            </div>
+            <div class="col-md-3">
+                <label class="form-label">Branch</label>
+                <select class="form-select" name="branch">
+                    <option value="">All Branches</option>
+                    {% for branch in company_branches %}
+                    <option value="{{ branch.id }}" {% if branch_filter == branch.id|string %}selected{% endif %}>{{ branch.branch_name }}</option>
+                    {% endfor %}
+                </select>
+            </div>
+            <div class="col-md-2 d-flex align-items-end">
+                <button type="submit" class="btn btn-primary w-100">Filter</button>
+            </div>
+        </form>
+    </div>
+</div>
+
+<div class="table-responsive">
+    <table class="table table-striped table-hover">
+        <thead class="table-dark">
+            <tr>
+                <th>PO No</th>
+                <th>Voucher Number</th>
+                <th>Dealer</th>
+                <th>Invoice Branch</th>
+                <th>Consignee</th>
+                <th>Total Quantity</th>
+                <th>Total Amount</th>
+                <th>Date</th>
+                <th>Status</th>
+                <th>Actions</th>
+            </tr>
+        </thead>
+        <tbody>
+            {% for po in purchase_orders %}
+            <tr>
+                <td>{{ po.po_no }}</td>
+                <td>{{ po.voucher_number }}</td>
+                <td>{{ po.dealer.name if po.dealer else 'N/A' }}</td>
+                <td>{{ po.invoice_branch.branch_name if po.invoice_branch else 'N/A' }}</td>
+                <td>{{ po.consignee.branch_name if po.consignee else 'N/A' }}</td>
+                <td>{{ po.total_quantity }}</td>
+                <td>{{ po.grand_total|currency }}</td>
+                <td>{{ po.date.strftime('%Y-%m-%d') }}</td>
+                <td>
+                    <span class="badge 
+                        {% if po.status == 'sent' %}bg-success
+                        {% elif po.status == 'waiting' %}bg-warning
+                        {% elif po.status == 'received' %}bg-info
+                        {% else %}bg-secondary{% endif %}">
+                        {{ po.status|title }}
+                    </span>
+                </td>
+                <td>
+                    <div class="btn-group btn-group-sm">
+                        <a href="/purchase_orders/{{ po.po_no }}" class="btn btn-info" title="View">
+                            <i class="bi bi-eye"></i>
+                        </a>
+                        <a href="/purchase_orders/edit/{{ po.po_no }}" class="btn btn-warning" title="Edit">
+                            <i class="bi bi-pencil"></i>
+                        </a>
+                        <!-- Updated button -->
+                        <a href="/purchase_orders/{{ po.po_no }}/generate" class="btn btn-success" title="Generate PDF">
+                            <i class="bi bi-file-earmark-pdf"></i> Generate PDF
+                        </a>
+                        <form action="/purchase_orders/delete/{{ po.po_no }}" method="post" style="display:inline;">
+                            <button type="submit" class="btn btn-dark" onclick="return confirm('Are you sure?')" title="Delete">
+                                <i class="bi bi-trash"></i>
+                            </button>
+                        </form>
+                    </div>
+                </td>
+            </tr>
+            {% else %}
+            <tr>
+                <td colspan="10" class="text-center py-4">
+                    <i class="bi bi-inbox" style="font-size: 2rem;"></i>
+                    <p class="mt-2">No purchase orders found.</p>
+                    <a href="/purchase_orders/add" class="btn btn-primary mt-2">Create Your First Purchase Order</a>
+                </td>
+            </tr>
+            {% endfor %}
+        </tbody>
+    </table>
+</div>
+{% endblock %}

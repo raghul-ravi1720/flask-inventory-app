@@ -1,0 +1,21 @@
+{% if materials %}
+    {% for material in materials %}
+    <div class="list-group-item list-group-item-action">
+        <div class="d-flex justify-content-between align-items-center">
+            <div>
+                <h6 class="mb-1">{{ material.base_name }}</h6>
+                {% if material.defined_name_with_spec %}
+                <small class="text-muted">{{ material.defined_name_with_spec }}</small>
+                <br>
+                {% endif %}
+                <small>Brand: {{ material.brand or 'N/A' }} | Dealer: {{ material.dealer.name if material.dealer else 'N/A' }} | Stock: {{ material.current_stock }} {{ material.units or '' }} | Price: {{ material.price|currency }}</small>
+            </div>
+            <button type="button" class="btn btn-sm btn-primary add-material-btn" data-material-id="{{ material.id }}">
+                Add
+            </button>
+        </div>
+    </div>
+    {% endfor %}
+{% else %}
+    <div class="list-group-item">No materials found</div>
+{% endif %}

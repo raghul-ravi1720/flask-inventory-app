@@ -1,0 +1,127 @@
+{% extends "base.html" %}
+
+{% block title %}View Purchase Order - Inventory Management System{% endblock %}
+
+{% block content %}
+<div class="container mt-4">
+    <div class="d-flex justify-content-between align-items-center mb-3">
+        <h1>Purchase Order: PO-{{ purchase_order.po_no }}</h1>
+        <div>
+            <a href="/purchase_orders/edit/{{ purchase_order.po_no }}" class="btn btn-warning me-2">Edit</a>
+            <a href="/purchase_orders/{{ purchase_order.po_no }}/pdf" class="btn btn-danger" target="_blank">Download PDF</a>
+        </div>
+    </div>
+    
+    <div class="card mb-4">
+        <div class="card-header bg-primary text-white">
+            <h5 class="mb-0">Purchase Order Details</h5>
+        </div>
+        <div class="card-body">
+            <div class="row">
+                <div class="col-md-3">
+                    <p><strong>PO Number:</strong> PO-{{ purchase_order.po_no }}</p>
+                    <p><strong>Voucher Number:</strong> {{ purchase_order.voucher_number }}</p>
+                    <p><strong>Date:</strong> {{ purchase_order.date.strftime('%Y-%m-%d') }}</p>
+                    <p><strong>Status:</strong> 
+                        <span class="badge 
+                            {% if purchase_order.status == 'sent' %}bg-success
+                            {% elif purchase_order.status == 'waiting' %}bg-warning
+                            {% elif purchase_order.status == 'received' %}bg-info
+                            {% else %}bg-secondary{% endif %}">
+                            {{ purchase_order.status|title }}
+                        </span>
+                    </p>
+                </div>
+                <div class="col-md-3">
+                    <p><strong>Dealer:</strong> {{ purchase_order.dealer.name if purchase_order.dealer else 'N/A' }}</p>
+                    <p><strong>Invoice Branch:</strong> {{ purchase_order.invoice_branch.branch_name if purchase_order.invoice_branch else 'N/A' }}</p>
+                    <p><strong>Consignee:</strong> {{ purchase_order.consignee.branch_name if purchase_order.consignee else 'N/A' }}</p>
+                </div>
+                <div class="col-md-3">
+                    <p><strong>Subtotal:</strong> {{ purchase_order.subtotal|currency }}</p>
+                    <p><strong>Tax (10%):</strong> {{ purchase_order.tax_amount|currency }}</p>
+                    <p><strong>Discount:</strong> {{ purchase_order.discount }}% ({{ purchase_order.discount_amount|currency }})</p>
+                    <p><strong>Grand Total:</strong> {{ purchase_order.grand_total|currency }}</p>
+                </div>
+                <div class="col-md-3">
+                    <p><strong>Total Quantity:</strong> {{ purchase_order.total_quantity }}</p>
+                    {% if purchase_order.notes %}
+                    <p><strong>Notes:</strong> {{ purchase_order.notes }}</p>
+                    {% endif %}
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <div class="card">
+        <div class="card-header bg-success text-white">
+            <h5 class="mb-0">Materials List</h5>
+        </div>
+        <div class="card-body">
+            <div class="table-responsive">
+                <table class="table table-striped">
+                    <thead>
+                        <tr>
+                            <th>Material</th>
+                            <th>Brand</th>
+                            <th>Dealer</th>
+                            <th>Quantity</th>
+                            <th>Unit</th>
+                            <th>Price</th>
+                            <th>Total</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        {% for item in purchase_order.items %}
+                        <tr>
+                            <td>
+                                {{ item.material_name }}
+                                {% if item.spec %}
+                                    <br><small class="text-muted">{{ item.spec }}</small>
+                                {% endif %}
+                            </td>
+                            <td>{{ item.brand or 'N/A' }}</td>
+                            <td>{{ item.dealer_name or 'N/A' }}</td>
+                            <td>{{ item.quantity }}</td>
+                            <td>{{ item.unit }}</td>
+                            <td>{{ item.price|currency }}</td>
+                            <td>{{ (item.quantity * item.price)|currency }}</td>
+                        </tr>
+                        {% else %}
+                        <tr>
+                            <td colspan="7" class="text-center">No items in this purchase order.</td>
+                        </tr>
+                        {% endfor %}
+                    </tbody>
+                    <tfoot>
+                        <tr>
+                            <td colspan="5"></td>
+                            <td><strong>Subtotal:</strong></td>
+                            <td><strong>{{ purchase_order.subtotal|currency }}</strong></td>
+                        </tr>
+                        <tr>
+                            <td colspan="5"></td>
+                            <td><strong>Tax (10%):</strong></td>
+                            <td><strong>{{ purchase_order.tax_amount|currency }}</strong></td>
+                        </tr>
+                        <tr>
+                            <td colspan="5"></td>
+                            <td><strong>Discount:</strong></td>
+                            <td><strong>{{ purchase_order.discount_amount|currency }}</strong></td>
+                        </tr>
+                        <tr class="table-primary">
+                            <td colspan="5"></td>
+                            <td><strong>Grand Total:</strong></td>
+                            <td><strong>{{ purchase_order.grand_total|currency }}</strong></td>
+                        </tr>
+                    </tfoot>
+                </table>
+            </div>
+        </div>
+    </div>
+
+    <div class="mt-3">
+        <a href="/purchase_orders" class="btn btn-secondary">Back to List</a>
+    </div>
+</div>
+{% endblock %}

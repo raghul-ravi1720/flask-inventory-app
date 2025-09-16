@@ -1,0 +1,547 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Purchase Order Generator - PO-{{ purchase_order.po_no }}</title>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/html2canvas/1.4.1/html2canvas.min.js"></script>
+    <style>
+        /* Your provided CSS styles here */
+        @import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap');
+        
+        body {
+            font-family: 'Inter', sans-serif;
+            background-color: #f8fafc;
+        }
+        
+        .logo-placeholder {
+            background: linear-gradient(135deg, #1e40af 0%, #3b82f6 100%);
+        }
+        
+        .print-only {
+            display: none;
+        }
+        
+        .po-container {
+            border: 2px solid #000;
+        }
+        
+        .po-header {
+            background-color: #f1f5f9;
+        }
+        
+        .signature-line {
+            border-top: 1px dashed #000;
+            width: 250px;
+            display: inline-block;
+            margin-top: 60px;
+        }
+        
+        .branch-selector {
+            transition: all 0.3s ease;
+        }
+        
+        .branch-selector:hover {
+            background-color: #f0f4ff;
+        }
+        
+        .material-item {
+            transition: background-color 0.2s;
+        }
+        
+        .material-item:hover {
+            background-color: #f8fafc;
+        }
+        
+        .form-section {
+            background: white;
+            border-radius: 10px;
+            box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1);
+            margin-bottom: 1.5rem;
+            overflow: hidden;
+        }
+        
+        .form-header {
+            background: #3b82f6;
+            color: white;
+            padding: 1rem;
+            font-weight: 600;
+        }
+        
+        .form-content {
+            padding: 1.5rem;
+        }
+        
+        @media print {
+            .no-print {
+                display: none;
+            }
+            .print-only {
+                display: block;
+            }
+            body {
+                background: white;
+                padding: 0;
+                margin: 0;
+            }
+        }
+        
+        /* Custom scrollbar */
+        ::-webkit-scrollbar {
+            width: 8px;
+        }
+        
+        ::-webkit-scrollbar-track {
+            background: #f1f1f1;
+        }
+        
+        ::-webkit-scrollbar-thumb {
+            background: #c5c5c5;
+            border-radius: 4px;
+        }
+        
+        ::-webkit-scrollbar-thumb:hover {
+            background: #a8a8a8;
+        }
+        
+        .slide-fade-enter-active {
+            transition: all 0.3s ease-out;
+        }
+        
+        .slide-fade-leave-active {
+            transition: all 0.3s cubic-bezier(1, 0.5, 0.8, 1);
+        }
+        
+        .slide-fade-enter-from,
+        .slide-fade-leave-to {
+            transform: translateY(10px);
+            opacity: 0;
+        }
+        
+        .tab-active {
+            border-bottom: 3px solid #3b82f6;
+            color: #3b82f6;
+        }
+    </style>
+</head>
+<body class="bg-gray-100 min-h-screen">
+    <div class="max-w-7xl mx-auto px-4 py-8">
+        <!-- Header -->
+        <div class="text-center mb-10">
+            <h1 class="text-3xl font-bold text-gray-800 mb-2">Purchase Order Generator</h1>
+            <p class="text-gray-600">Generate PDF for PO-{{ purchase_order.po_no }}</p>
+        </div>
+
+        <!-- Main Content -->
+        <div class="flex flex-col lg:flex-row gap-8">
+            <!-- Form Section -->
+            <div class="w-full lg:w-2/5 no-print">
+                <div class="form-section">
+                    <div class="form-header">
+                        <i class="fas fa-file-invoice mr-2"></i> P.O. Details
+                    </div>
+                    <div class="form-content">
+                        <div class="grid grid-cols-2 gap-4 mb-4">
+                            <div>
+                                <label class="block text-sm font-medium text-gray-700 mb-1">Voucher Number</label>
+                                <input type="text" id="voucherNo" class="w-full px-4 py-2 border border-gray-300 rounded-md focus:ring-blue-500 focus:border-blue-500" value="{{ purchase_order.voucher_number }}" readonly>
+                            </div>
+                            <div>
+                                <label class="block text-sm font-medium text-gray-700 mb-1">Date</label>
+                                <input type="text" id="date" class="w-full px-4 py-2 border border-gray-300 rounded-md focus:ring-blue-500 focus:border-blue-500" value="{{ purchase_order.date.strftime('%Y-%m-%d') }}" readonly>
+                            </div>
+                        </div>
+                        
+                        <div class="mb-4">
+                            <label class="block text-sm font-medium text-gray-700 mb-1">Mode/Terms of Payment</label>
+                            <input type="text" id="paymentTerms" class="w-full px-4 py-2 border border-gray-300 rounded-md focus:ring-blue-500 focus:border-blue-500" value="Bank Transfer - 30 Days" readonly>
+                        </div>
+                        
+                        <div class="grid grid-cols-2 gap-4 mb-4">
+                            <div>
+                                <label class="block text-sm font-medium text-gray-700 mb-1">Reference No. & Date</label>
+                                <input type="text" id="referenceNo" class="w-full px-4 py-2 border border-gray-300 rounded-md focus:ring-blue-500 focus:border-blue-500" value="{{ purchase_order.voucher_number }}" readonly>
+                            </div>
+                            <div>
+                                <label class="block text-sm font-medium text-gray-700 mb-1">Destination</label>
+                                <input type="text" id="destination" class="w-full px-4 py-2 border border-gray-300 rounded-md focus:ring-blue-500 focus:border-blue-500" value="{{ purchase_order.consignee.city if purchase_order.consignee else '' }}" readonly>
+                            </div>
+                        </div>
+                        
+                        <div class="grid grid-cols-2 gap-4 mb-4">
+                            <div>
+                                <label class="block text-sm font-medium text-gray-700 mb-1">Dispatch Through</label>
+                                <input type="text" id="dispatchThrough" class="w-full px-4 py-2 border border-gray-300 rounded-md focus:ring-blue-500 focus:border-blue-500" value="Road Transport" readonly>
+                            </div>
+                            <div>
+                                <label class="block text-sm font-medium text-gray-700 mb-1">Terms of Delivery</label>
+                                <input type="text" id="deliveryTerms" class="w-full px-4 py-2 border border-gray-300 rounded-md focus:ring-blue-500 focus:border-blue-500" value="FOB - Destination" readonly>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Supplier Information -->
+                <div class="form-section">
+                    <div class="form-header">
+                        <i class="fas fa-truck mr-2"></i> Supplier Information
+                    </div>
+                    <div class="form-content">
+                        <div class="mb-4">
+                            <label class="block text-sm font-medium text-gray-700 mb-1">Supplier Name</label>
+                            <input type="text" id="supplierName" class="w-full px-4 py-2 border border-gray-300 rounded-md focus:ring-blue-500 focus:border-blue-500" value="{{ purchase_order.dealer.name if purchase_order.dealer else 'N/A' }}" readonly>
+                        </div>
+                        
+                        <div class="mb-4">
+                            <label class="block text-sm font-medium text-gray-700 mb-1">Supplier Address</label>
+                            <textarea id="supplierAddress" rows="3" class="w-full px-4 py-2 border border-gray-300 rounded-md focus:ring-blue-500 focus:border-blue-500" readonly>
+{{ purchase_order.dealer.address if purchase_order.dealer else '' }}
+{{ purchase_order.dealer.city if purchase_order.dealer else '' }}, {{ purchase_order.dealer.state if purchase_order.dealer else '' }} - {{ purchase_order.dealer.pincode if purchase_order.dealer else '' }}</textarea>
+                        </div>
+                        
+                        <div class="grid grid-cols-2 gap-4 mb-4">
+                            <div>
+                                <label class="block text-sm font-medium text-gray-700 mb-1">GSTIN/UIN</label>
+                                <input type="text" id="supplierGst" class="w-full px-4 py-2 border border-gray-300 rounded-md focus:ring-blue-500 focus:border-blue-500" value="{{ purchase_order.dealer.gst_no if purchase_order.dealer else 'N/A' }}" readonly>
+                            </div>
+                            <div>
+                                <label class="block text-sm font-medium text-gray-700 mb-1">State Code</label>
+                                <input type="text" id="supplierStateCode" class="w-full px-4 py-2 border border-gray-300 rounded-md focus:ring-blue-500 focus:border-blue-500" value="{{ purchase_order.dealer.state_code if purchase_order.dealer else 'N/A' }}" readonly>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Materials/Items -->
+                <div class="form-section">
+                    <div class="form-header">
+                        <i class="fas fa-boxes mr-2"></i> Materials/Items
+                    </div>
+                    <div class="form-content">
+                        <div id="materialList" class="mt-4 max-h-60 overflow-y-auto p-2 border border-gray-200 rounded-md">
+                            {% for item in purchase_order.items %}
+                            <div class="material-item bg-gray-50 p-3 rounded-lg mb-2">
+                                <div class="flex justify-between items-start">
+                                    <div>
+                                        <h4 class="font-medium text-gray-800">{{ item.material_name }}</h4>
+                                        {% if item.spec %}<p class="text-sm text-gray-600 mt-1">{{ item.spec }}</p>{% endif %}
+                                        <div class="flex text-xs text-gray-500 mt-2">
+                                            <span class="mr-3">Qty: {{ item.quantity }} {{ item.unit }}</span>
+                                            <span>Price: ₹{{ item.price }}</span>
+                                        </div>
+                                    </div>
+                                    <div class="text-right">
+                                        <p class="text-sm font-medium text-gray-800">₹{{ (item.quantity * item.price)|round(2) }}</p>
+                                    </div>
+                                </div>
+                            </div>
+                            {% endfor %}
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Taxes and Charges -->
+                <div class="form-section">
+                    <div class="form-header">
+                        <i class="fas fa-receipt mr-2"></i> Taxes and Charges
+                    </div>
+                    <div class="form-content">
+                        <div class="flex items-center mb-4">
+                            <input type="checkbox" id="applyCgst" checked class="h-4 w-4 text-blue-600 focus:ring-blue-500 border-gray-300 rounded" disabled>
+                            <label for="applyCgst" class="ml-2 block text-sm text-gray-900">Apply CGST (9%)</label>
+                        </div>
+                        
+                        <div class="flex items-center mb-4">
+                            <input type="checkbox" id="applySgst" checked class="h-4 w-4 text-blue-600 focus:ring-blue-500 border-gray-300 rounded" disabled>
+                            <label for="applySgst" class="ml-2 block text-sm text-gray-900">Apply SGST (9%)</label>
+                        </div>
+                        
+                        <div class="flex items-center">
+                            <input type="checkbox" id="applyRoundOff" checked class="h-4 w-4 text-blue-600 focus:ring-blue-500 border-gray-300 rounded" disabled>
+                            <label for="applyRoundOff" class="ml-2 block text-sm text-gray-900">Apply Round Off</label>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Action Buttons -->
+                <div class="flex space-x-4 mt-6 no-print">
+                    <button onclick="updatePreview()" class="flex-1 bg-blue-600 hover:bg-blue-700 text-white py-3 px-6 rounded-md flex items-center justify-center">
+                        <i class="fas fa-sync-alt mr-2"></i> Update Preview
+                    </button>
+                    <button onclick="generatePDF()" class="flex-1 bg-green-600 hover:bg-green-700 text-white py-3 px-6 rounded-md flex items-center justify-center">
+                        <i class="fas fa-file-pdf mr-2"></i> Generate PDF
+                    </button>
+                </div>
+            </div>
+
+            <!-- Preview Section -->
+            <div class="w-full lg:w-3/5">
+                <div id="purchaseOrder" class="bg-white p-6 border border-gray-200 rounded-lg">
+                    <!-- Header -->
+                    <div class="text-center mb-6">
+                        <h1 class="text-xl font-bold tracking-wider text-gray-800">PURCHASE ORDER</h1>
+                    </div>
+
+                    <!-- Main Content Table -->
+                    <div class="po-container">
+                        <!-- Top Section -->
+                        <div class="flex">
+                            <!-- Left Side - Company Info -->
+                            <div class="flex-1 border-r border-black">
+                                <div class="flex p-4">
+                                    <!-- Logo -->
+                                    <div class="w-20 h-20 mr-4 flex-shrink-0 flex items-center justify-center">
+                                        <img src="{{ url_for('static', path='images/company_logo.png') }}" 
+                                            alt="Company Logo" 
+                                            class="w-30 h-30 ">
+                                    </div>
+                                    
+                                    <!-- Company Details -->
+                                    <div class="flex-1">
+                                        <div class="text-xs text-gray-600 mb-1">INVOICE TO</div>
+                                        <div id="preCompanyName" class="font-bold text-sm mb-2">{{ purchase_order.invoice_branch.company_name if purchase_order.invoice_branch else 'N/A' }}</div>
+                                        <div id="preCompanyAddress" class="text-xs text-gray-700 whitespace-pre-line">
+                                            {{ purchase_order.invoice_branch.address if purchase_order.invoice_branch else 'N/A' }}
+                                            {{ purchase_order.invoice_branch.city if purchase_order.invoice_branch else '' }}, {{ purchase_order.invoice_branch.state if purchase_order.invoice_branch else '' }} - {{ purchase_order.invoice_branch.pincode if purchase_order.invoice_branch else '' }}
+                                            GSTIN/UIN: {{ purchase_order.invoice_branch.gst_no if purchase_order.invoice_branch else 'N/A' }}
+                                            STATE NAME: {{ purchase_order.invoice_branch.state if purchase_order.invoice_branch else 'N/A' }}, CODE: {{ purchase_order.invoice_branch.state_code if purchase_order.invoice_branch else 'N/A' }}
+                                            E-MAIL: {{ purchase_order.invoice_branch.email if purchase_order.invoice_branch else 'N/A' }}
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+
+                            <!-- Right Side - Order Details -->
+                            <div class="w-80">
+                                <!-- Voucher and Date -->
+                                <div class="border-b border-black">
+                                    <div class="flex">
+                                        <div class="flex-1 border-r border-black p-2">
+                                            <div class="text-xs text-gray-600">VOUCHER NO.</div>
+                                            <div id="preVoucherNo" class="text-xs font-medium">{{ purchase_order.voucher_number }}</div>
+                                        </div>
+                                        <div class="flex-1 p-2">
+                                            <div class="text-xs text-gray-600">DATED</div>
+                                            <div id="preDate" class="text-xs font-medium">{{ purchase_order.date.strftime('%d-%B-%Y') }}</div>
+                                        </div>
+                                    </div>
+                                </div>
+
+                                <!-- Mode/Terms and Other Reasons -->
+                                <div class="border-b border-black">
+                                    <div class="flex">
+                                        <div class="flex-1 border-r border-black p-2">
+                                            <div class="text-xs text-gray-600">MODE/TERMS OF PAYMENT</div>
+                                            <div id="prePaymentTerms" class="text-xs">Bank Transfer - 30 Days</div>
+                                        </div>
+                                        <div class="flex-1 p-2">
+                                            <div class="text-xs text-gray-600">OTHER REASONS</div>
+                                        </div>
+                                    </div>
+                                </div>
+
+                                <!-- Reference and Dispatch -->
+                                <div class="border-b border-black">
+                                    <div class="flex">
+                                        <div class="flex-1 border-r border-black p-2">
+                                            <div class="text-xs text-gray-600">REFERENCE NO. & DATE</div>
+                                            <div id="preReferenceNo" class="text-xs font-medium">{{ purchase_order.voucher_number }}</div>
+                                        </div>
+                                        <div class="flex-1 p-2">
+                                            <div class="text-xs text-gray-600">DESTINATION</div>
+                                            <div id="preDestination" class="text-xs">{{ purchase_order.consignee.city if purchase_order.consignee else '' }}</div>
+                                        </div>
+                                    </div>
+                                </div>
+
+                                <!-- Dispatch and Terms -->
+                                <div>
+                                    <div class="flex">
+                                        <div class="flex-1 border-r border-black p-2">
+                                            <div class="text-xs text-gray-600">DISPATCH THROUGH</div>
+                                            <div id="preDispatchThrough" class="text-xs">Road Transport</div>
+                                        </div>
+                                        <div class="flex-1 p-2">
+                                            <div class="text-xs text-gray-600">TERMS OF DELIVERY</div>
+                                            <div id="preDeliveryTerms" class="text-xs">FOB - Destination</div>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+
+                        <!-- Consignee Section -->
+                        <div style="display: flex; width: 100%; border: 1px solid #ccc; border-radius: 6px; overflow: hidden; margin-bottom: 1rem; font-size: 12px; line-height: 1.4;">
+    
+                          <!-- Consignee Section -->
+                            <div style="flex: 1; padding: 8px 12px;">
+                                <h3 style="margin: 0 0 6px 0; font-size: 13px; font-weight: bold; border-bottom: 1px solid #ddd; padding-bottom: 3px;">
+                                    Consignee
+                                </h3>
+                                <p style="margin: 2px 0;"><strong>{{ purchase_order.consignee.company_name }}</strong></p>
+                                <p style="margin: 2px 0;">{{ purchase_order.consignee.branch_name }}</p>
+                                <p style="margin: 2px 0;">{{ purchase_order.consignee.address }}</p>
+                                <p style="margin: 2px 0;">{{ purchase_order.consignee.city }}, {{ purchase_order.consignee.state }}</p>
+                                <p style="margin: 2px 0;">GST: {{ purchase_order.consignee.gst_no }}</p>
+                            </div>
+
+                            <!-- Vertical Divider -->
+                            <div style="width: 1px; background-color: #ccc;"></div>
+
+                            <!-- Supplier Section -->
+                            <div style="flex: 1; padding: 8px 12px;">
+                                <h3 style="margin: 0 0 6px 0; font-size: 13px; font-weight: bold; border-bottom: 1px solid #ddd; padding-bottom: 3px;">
+                                    Supplier
+                                </h3>
+                                <p style="margin: 2px 0;"><strong>{{ purchase_order.dealer.name }}</strong></p>
+                                <p style="margin: 2px 0;">{{ purchase_order.dealer.address }}</p>
+                                <p style="margin: 2px 0;">{{ purchase_order.dealer.city }}, {{ purchase_order.dealer.state }}</p>
+                                <p style="margin: 2px 0;">GST: {{ purchase_order.dealer.gst_no }}</p>
+                            </div>
+                        </div>
+
+                        <!-- Items Table Header -->
+                        <div class="border-t border-black">
+                            <div class="flex text-xs font-medium bg-gray-50 po-header">
+                                <div class="w-12 border-r border-black p-2 text-center">
+                                    <div>SI</div>
+                                    <div>NO.</div>
+                                </div>
+                                <div class="flex-1 border-r border-black p-2 text-center">DESCRIPTION OF GOODS</div>
+                                <div class="w-16 border-r border-black p-2 text-center">HSN/SAC</div>
+                                <div class="w-16 border-r border-black p-2 text-center">DUE ON</div>
+                                <div class="w-16 border-r border-black p-2 text-center">QUANTITY</div>
+                                <div class="w-16 border-r border-black p-2 text-center">RATE</div>
+                                <div class="w-12 border-r border-black p-2 text-center">PER</div>
+                                <div class="w-16 border-r border-black p-2 text-center">DISC. %</div>
+                                <div class="w-20 p-2 text-center">AMOUNT</div>
+                            </div>
+                        </div>
+
+                        <!-- Items Table Content -->
+                        <div id="preMaterials" class="border-t border-black">
+                            {% for item in purchase_order.items %}
+                            <div class="flex text-xs">
+                                <div class="w-12 border-r border-black p-2 text-center">{{ loop.index }}</div>
+                                <div class="flex-1 border-r border-black p-2">
+                                    <div class="font-medium">{{ item.material_name }}</div>
+                                    {% if item.spec %}<div class="text-gray-600">{{ item.spec }}</div>{% endif %}
+                                </div>
+                                <div class="w-16 border-r border-black p-2 text-center">
+                                    {% if item.material and item.material.hsn_code %}
+                                        {{ item.material.hsn_code }}
+                                    {% else %}
+                                        -
+                                    {% endif %}
+                                </div>
+                                <div class="w-16 border-r border-black p-2 text-center">{{ purchase_order.date.strftime('%d-%b-%Y') }}</div>
+                                <div class="w-16 border-r border-black p-2 text-center">{{ item.quantity }}</div>
+                                <div class="w-16 border-r border-black p-2 text-center">₹{{ item.price }}</div>
+                                <div class="w-12 border-r border-black p-2 text-center">{{ item.unit }}</div>
+                                <div class="w-16 border-r border-black p-2 text-center">0%</div>
+                                <div class="w-20 p-2 text-center">₹{{ (item.quantity * item.price)|round(2) }}</div>
+                            </div>
+                            {% endfor %}
+                        </div>
+
+                        <!-- Totals Section -->
+                        <div class="border-t border-black">
+                            <div class="flex text-xs font-medium">
+                                <div class="flex-1 border-r border-black p-2 text-center">TOTAL</div>
+                                <div class="w-16 border-r border-black p-2"></div>
+                                <div class="w-16 border-r border-black p-2"></div>
+                                <div class="w-16 border-r border-black p-2 text-center">
+                                    <div id="preTotalQty">{{ purchase_order.total_quantity }}</div>
+                                    <div>UNITS</div>
+                                </div>
+                                <div class="w-16 border-r border-black p-2"></div>
+                                <div class="w-12 border-r border-black p-2"></div>
+                                <div class="w-16 border-r border-black p-2"></div>
+                                <div class="w-20 p-2 text-center">
+                                    <div id="preTotalAmount">₹{{ purchase_order.subtotal|round(2) }}</div>
+                                </div>
+                            </div>
+                        </div>
+
+                        <!-- GST Calculation -->
+                        <div class="border-t border-black flex text-xs">
+                            <div class="flex-1 p-2 border-r border-black">
+                                <div class="text-right mb-1">CGST (9%):</div>
+                                <div class="text-right">SGST (9%):</div>
+                                <div class="text-right">Round Off:</div>
+                                <div class="text-right">Net Total:</div>
+                            </div>
+                            <div class="w-40 p-2">
+                                <div class="text-right mb-1" id="preCgst">₹{{ (purchase_order.tax_amount / 2)|round(2) }}</div>
+                                <div class="text-right" id="preSgst">₹{{ (purchase_order.tax_amount / 2)|round(2) }}</div>
+                                <div class="text-right" id="preRoundOff">₹{{ (purchase_order.grand_total - (purchase_order.grand_total|round(0)))|round(2) }}</div>
+                                <div class="text-right" id="preNetTotal">₹{{ purchase_order.grand_total|round(0) }}</div>
+                            </div>
+                        </div>
+
+                        <!-- Grand Total -->
+                        <div class="border-t border-black flex text-xs font-medium">
+                            <div class="flex-1 p-2 border-r border-black text-right">GRAND TOTAL:</div>
+                            <div class="w-40 p-2 text-center" id="preGrandTotal">₹{{ purchase_order.grand_total|round(0) }}</div>
+                        </div>
+
+                        <!-- Amount in Words -->
+                        <div class="border-t border-black p-4">
+                            <div class="text-xs text-gray-600 mb-1">AMOUNT CHARGEABLE (IN WORDS)</div>
+                            <div class="font-bold text-sm" id="preAmountWords">{{ amount_in_words }}</div>
+                        </div>
+
+                        <!-- Signature Section -->
+                        <div class="border-t border-black flex">
+                            <div class="flex-1 p-4">
+                                <div class="text-xs text-gray-600 mb-1">RECEIVER'S SIGNATURE</div>
+                                <div class="signature-line"></div>
+                            </div>
+                            <div class="flex-1 p-4">
+                                <div class="text-right">
+                                    <div class="text-xs text-gray-600 mb-1">FOR {{ purchase_order.invoice_branch.company_name if purchase_order.invoice_branch else 'COMPANY NAME' }}</div>
+                                    <div class="text-xs text-gray-600">AUTHORISED SIGNATORY</div>
+                                    <div class="signature-line"></div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        // Generate PDF function
+        function generatePDF() {
+            const { jsPDF } = window.jspdf;
+            const element = document.getElementById('purchaseOrder');
+            
+            html2canvas(element).then(canvas => {
+                const imgData = canvas.toDataURL('image/png');
+                const pdf = new jsPDF('p', 'mm', 'a4');
+                const imgProps = pdf.getImageProperties(imgData);
+                const pdfWidth = pdf.internal.pageSize.getWidth();
+                const pdfHeight = (imgProps.height * pdfWidth) / imgProps.width;
+                
+                pdf.addImage(imgData, 'PNG', 0, 0, pdfWidth, pdfHeight);
+                pdf.save('purchase-order-{{ purchase_order.voucher_number }}.pdf');
+            });
+        }
+
+        // Update preview function (minimal implementation since data is pre-filled)
+        function updatePreview() {
+            // Just regenerate the PDF
+            generatePDF();
+        }
+
+        // Initialize on page load
+        window.onload = function() {
+            // Nothing needed here since all data is pre-filled
+        };
+    </script>
+</body>
+</html>

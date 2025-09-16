@@ -1,0 +1,69 @@
+{% extends "base.html" %}
+
+{% block title %}Company Branches - Inventory Management System{% endblock %}
+
+{% block content %}
+<div class="d-flex justify-content-between align-items-center mb-3">
+    <h1>Company Branches</h1>
+    <a href="/company_branches/add" class="btn btn-success">Add New Company Branch</a>
+</div>
+
+{% if error %}
+<div class="alert alert-danger">{{ error }}</div>
+{% endif %}
+
+<!-- Debug info (remove in production) -->
+<div class="alert alert-info d-none">
+    Debug: Found {{ company_branches|length }} company branches
+</div>
+
+<div class="table-responsive">
+    <table class="table table-striped table-hover">
+        <thead class="table-dark">
+            <tr>
+                <th>ID</th>
+                <th>Company Name</th>
+                <th>Branch Name</th>
+                <th>Address</th>
+                <th>City</th>
+                <th>State</th>
+                <th>GST No</th>
+                <th>Actions</th>
+            </tr>
+        </thead>
+        <tbody>
+            {% for branch in company_branches %}
+            <tr>
+                <td>{{ branch.id }}</td>
+                <td>{{ branch.company_name }}</td>
+                <td>{{ branch.branch_name }}</td>
+                <td>{{ branch.address }}</td>
+                <td>{{ branch.city }}</td>
+                <td>{{ branch.state }}</td>
+                <td>{{ branch.gst_no }}</td>
+                <td>
+                    <div class="btn-group btn-group-sm">
+                        <a href="/company_branches/edit/{{ branch.id }}" class="btn btn-warning" title="Edit">
+                            <i class="bi bi-pencil"></i>
+                        </a>
+                        <form action="/company_branches/delete/{{ branch.id }}" method="post" style="display:inline;">
+                            <button type="submit" class="btn btn-danger" onclick="return confirm('Are you sure?')" title="Delete">
+                                <i class="bi bi-trash"></i>
+                            </button>
+                        </form>
+                    </div>
+                </td>
+            </tr>
+            {% else %}
+            <tr>
+                <td colspan="8" class="text-center py-4">
+                    <i class="bi bi-inbox" style="font-size: 2rem;"></i>
+                    <p class="mt-2">No company branches found.</p>
+                    <a href="/company_branches/add" class="btn btn-primary mt-2">Add Your First Company Branch</a>
+                </td>
+            </tr>
+            {% endfor %}
+        </tbody>
+    </table>
+</div>
+{% endblock %}
