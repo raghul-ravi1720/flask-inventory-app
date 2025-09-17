@@ -55,7 +55,7 @@ async def list_purchase_orders(request: Request, db: Session = Depends(get_db)):
         if branch_filter:
             query = query.filter(models.PurchaseOrder.invoice_branch_id == branch_filter)
         
-        purchase_orders = query.order_by(models.PurchaseOrder.po_no.desc()).all()
+        purchase_orders = query.order_by(models.PurchaseOrder.po_no.asc()).all()
         company_branches = db.query(models.CompanyBranch).all()
         
         return templates.TemplateResponse("purchase_orders.html", {
@@ -82,7 +82,7 @@ async def add_purchase_order_form(request: Request, db: Session = Depends(get_db
         consignees = db.query(models.Consignee).all()
         
         # Get the next PO number
-        last_po = db.query(models.PurchaseOrder).order_by(models.PurchaseOrder.po_no.desc()).first()
+        last_po = db.query(models.PurchaseOrder).order_by(models.PurchaseOrder.po_no.asc()).first()
         next_po_number = last_po.po_no + 1 if last_po else 1
         
         return templates.TemplateResponse("add_purchase_order.html", {
@@ -161,7 +161,7 @@ async def add_purchase_order(
         company_branches = db.query(models.CompanyBranch).all()
         consignees = db.query(models.Consignee).all()
         
-        last_po = db.query(models.PurchaseOrder).order_by(models.PurchaseOrder.po_no.desc()).first()
+        last_po = db.query(models.PurchaseOrder).order_by(models.PurchaseOrder.po_no.asc()).first()
         next_po_number = last_po.po_no + 1 if last_po else 1
         
         return templates.TemplateResponse("add_purchase_order.html", {

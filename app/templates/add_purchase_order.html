@@ -160,7 +160,8 @@ function escapeHtml(unsafe) {
         .replace(/>/g, "&gt;")
         .replace(/"/g, "&quot;")
         .replace(/'/g, "&#039;");
-}    
+}
+
 document.addEventListener('DOMContentLoaded', function() {
     const materialSearch = document.getElementById('materialSearch');
     const dealerFilter = document.getElementById('dealerFilter');
@@ -176,16 +177,15 @@ document.addEventListener('DOMContentLoaded', function() {
     const discountAmountElement = document.getElementById('discountAmount');
     const grandTotalElement = document.getElementById('grandTotal');
     const discountInput = document.querySelector('input[name="discount"]');
-    const poForm = document.getElementById('poForm');
     const dealerSelect = document.getElementById('dealerSelect');
-    
+
     let selectedMaterialsMap = new Map();
-    
+
     // Update dealer filter when dealer select changes
     dealerSelect.addEventListener('change', function() {
         dealerFilter.value = this.value;
     });
-    
+
     // Search functionality
     function searchMaterials() {
         const query = materialSearch.value.trim();
@@ -227,52 +227,52 @@ document.addEventListener('DOMContentLoaded', function() {
             searchMaterials();
         }
     });
-    
 
     // Add material to table
     function addMaterialToTable(materialId) {
         if (selectedMaterialsMap.has(materialId)) return;
         
         fetch(`/storage/api/${materialId}`)
-            .then(response => {
-                if (!response.ok) {
-                    throw new Error('Network response was not ok');
-                }
-                return response.json();
-            })
+            .then(response => response.json())
             .then(material => {
-                 // Escape the specification text
                 const escapedSpec = escapeHtml(material.defined_name_with_spec || '');
                 selectedMaterialsMap.set(materialId, material);
-                
+
                 if (noMaterialsMessage) {
                     noMaterialsMessage.style.display = 'none';
                 }
                 if (poTotals) {
                     poTotals.style.display = '';
                 }
-                
+
+                // ✅ use sequential index instead of materialId
+                let nextIndex = 0;
+                while (document.querySelector(`input[name="items[${nextIndex}][material_id]"]`)) {
+                    nextIndex++;
+                }
+
                 const row = document.createElement('tr');
                 row.id = `material-${materialId}`;
                 row.innerHTML = `
                     <td>
-                        <input type="hidden" name="items[${materialId}][material_id]" value="${materialId}">
-                        <input type="hidden" name="items[${materialId}][material_name]" value="${material.base_name}">
-                        <input type="hidden" name="items[${materialId}][spec]" value="${escapedSpec}">
-                        <input type="hidden" name="items[${materialId}][brand]" value="${material.brand || ''}">
-                        <input type="hidden" name="items[${materialId}][dealer_name]" value="${material.dealer_name || ''}">
+                        <input type="hidden" name="items[${nextIndex}][material_id]" value="${materialId}">
+                        <input type="hidden" name="items[${nextIndex}][material_name]" value="${material.base_name}">
+                        <input type="hidden" name="items[${nextIndex}][spec]" value="${escapedSpec}">
+                        <input type="hidden" name="items[${nextIndex}][brand]" value="${material.brand || ''}">
+                        <input type="hidden" name="items[${nextIndex}][dealer_name]" value="${material.dealer_name || ''}">
                         ${material.base_name}
                         ${material.defined_name_with_spec ? `<br><small class="text-muted">${material.defined_name_with_spec}</small>` : ''}
+                    </td>
                     <td>${material.brand || 'N/A'}</td>
                     <td>${material.dealer_name || 'N/A'}</td>
                     <td>
-                        <input type="number" name="items[${materialId}][quantity]" class="form-control form-control-sm quantity-input" value="1" min="1" required onchange="updateItemTotal(${materialId})">
+                        <input type="number" name="items[${nextIndex}][quantity]" class="form-control form-control-sm quantity-input" value="1" min="1" required onchange="updateItemTotal(${materialId})">
                     </td>
                     <td>
-                        <input type="text" name="items[${materialId}][unit]" class="form-control form-control-sm unit-input" value="${material.units || 'Nos'}" onchange="updateItemTotal(${materialId})">
+                        <input type="text" name="items[${nextIndex}][unit]" class="form-control form-control-sm unit-input" value="${material.units || 'Nos'}" onchange="updateItemTotal(${materialId})">
                     </td>
                     <td>
-                        <input type="number" name="items[${materialId}][price]" class="form-control form-control-sm price-input" value="${material.price || 0}" min="0" step="0.01" required onchange="updateItemTotal(${materialId})">
+                        <input type="number" name="items[${nextIndex}][price]" class="form-control form-control-sm price-input" value="${material.price || 0}" min="0" step="0.01" required onchange="updateItemTotal(${materialId})">
                     </td>
                     <td class="item-total" id="total-${materialId}">${material.price ? '₹' + (material.price * 1).toFixed(2) : '₹0.00'}</td>
                     <td>
@@ -282,17 +282,14 @@ document.addEventListener('DOMContentLoaded', function() {
                     </td>
                 `;
                 selectedMaterials.appendChild(row);
-                
+
                 // Add event listeners
                 row.querySelector('.remove-material').addEventListener('click', function() {
                     removeMaterialFromTable(materialId);
                 });
-                
-                // Hide search results
+
                 searchResults.style.display = 'none';
                 materialSearch.value = '';
-                
-                // Update totals
                 updateTotals();
             })
             .catch(error => {
@@ -300,64 +297,53 @@ document.addEventListener('DOMContentLoaded', function() {
                 alert('Error loading material details. Please try again.');
             });
     }
-    
+
     // Remove material from table
     function removeMaterialFromTable(materialId) {
         selectedMaterialsMap.delete(materialId);
         const row = document.getElementById(`material-${materialId}`);
-        if (row) {
-            row.remove();
-        }
+        if (row) row.remove();
         
         if (selectedMaterialsMap.size === 0) {
-            if (noMaterialsMessage) {
-                noMaterialsMessage.style.display = '';
-            }
-            if (poTotals) {
-                poTotals.style.display = 'none';
-            }
+            if (noMaterialsMessage) noMaterialsMessage.style.display = '';
+            if (poTotals) poTotals.style.display = 'none';
         }
-        
-        // Update totals
         updateTotals();
     }
-    
+
     // Update item total
     window.updateItemTotal = function(materialId) {
         const quantity = parseFloat(document.querySelector(`#material-${materialId} .quantity-input`).value) || 0;
         const price = parseFloat(document.querySelector(`#material-${materialId} .price-input`).value) || 0;
         const total = quantity * price;
-        
         document.getElementById(`total-${materialId}`).textContent = '₹' + total.toFixed(2);
         updateTotals();
     }
-    
+
     // Update all totals
     function updateTotals() {
         let subtotal = 0;
-        
         selectedMaterialsMap.forEach((material, materialId) => {
-            const quantity = parseFloat(document.querySelector(`#material-${materialId} .quantity-input`).value) || 0;
-            const price = parseFloat(document.querySelector(`#material-${materialId} .price-input`).value) || 0;
+            const row = document.getElementById(`material-${materialId}`);
+            if (!row) return;
+            const quantity = parseFloat(row.querySelector('.quantity-input').value) || 0;
+            const price = parseFloat(row.querySelector('.price-input').value) || 0;
             subtotal += quantity * price;
         });
-        
         const discount = parseFloat(discountInput.value) || 0;
-        const taxAmount = subtotal * 0.1; // 10% tax
+        const taxAmount = subtotal * 0.1;
         const discountAmount = subtotal * (discount / 100);
         const grandTotal = subtotal + taxAmount - discountAmount;
-        
+
         subtotalElement.textContent = '₹' + subtotal.toFixed(2);
         taxAmountElement.textContent = '₹' + taxAmount.toFixed(2);
         discountAmountElement.textContent = '₹' + discountAmount.toFixed(2);
         grandTotalElement.textContent = '₹' + grandTotal.toFixed(2);
         itemsCount.textContent = selectedMaterialsMap.size + ' items';
     }
-    
-    // Update totals when discount changes
+
     discountInput.addEventListener('input', updateTotals);
-    
-    // Close search results when clicking outside
+
     document.addEventListener('click', function(e) {
         if (!searchResults.contains(e.target) && e.target !== materialSearch && e.target !== searchButton && e.target !== dealerFilter) {
             searchResults.style.display = 'none';
