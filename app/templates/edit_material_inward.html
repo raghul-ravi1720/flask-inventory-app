@@ -1,0 +1,91 @@
+{% extends "base.html" %}
+
+{% block title %}Edit Material Inward - Inventory Management System{% endblock %}
+
+{% block content %}
+<div class="container mt-4">
+    <h2>Edit Material Inward</h2>
+
+    {% if error %}
+    <div class="alert alert-danger">{{ error }}</div>
+    {% endif %}
+
+    <form method="post" action="/material_inward/edit/{{ inward.id }}" id="inwardForm">
+        <div class="card mb-4">
+            <div class="card-header bg-warning text-dark">
+                <h5 class="mb-0">Inward Details</h5>
+            </div>
+            <div class="card-body">
+                <div class="row">
+                    <div class="col-md-4 mb-3">
+                        <label class="form-label">PO Number</label>
+                        <select name="po_no" class="form-select" required>
+                            <option value="">Select PO</option>
+                            {% for po in purchase_orders %}
+                            <option value="{{ po.po_no }}" {% if inward.po_no == po.po_no %}selected{% endif %}>
+                                {{ po.po_no }} - {{ po.dealer.name if po.dealer else 'Unknown Dealer' }}
+                            </option>
+                            {% endfor %}
+                        </select>
+                    </div>
+                    <div class="col-md-4 mb-3">
+                        <label class="form-label">Dealer Name</label>
+                        <input type="text" name="dealer_name" class="form-control"
+                               value="{{ inward.dealer_name or '' }}" required>
+                    </div>
+                    <div class="col-md-4 mb-3">
+                        <label class="form-label">PO Date</label>
+                        <input type="date" name="po_date" class="form-control"
+                               value="{{ inward.po_date.strftime('%Y-%m-%d') if inward.po_date }}">
+                    </div>
+                </div>
+
+                <div class="row">
+                    <div class="col-md-4 mb-3">
+                        <label class="form-label">Date of Inward</label>
+                        <input type="date" name="date_of_inward" class="form-control"
+                               value="{{ inward.date_of_inward.strftime('%Y-%m-%d') if inward.date_of_inward }}" required>
+                    </div>
+                    <div class="col-md-4 mb-3">
+                        <label class="form-label">Bill Number</label>
+                        <input type="text" name="bill_no" class="form-control"
+                               value="{{ inward.bill_no or '' }}">
+                    </div>
+                    <div class="col-md-4 mb-3">
+                        <label class="form-label">Bill Date</label>
+                        <input type="date" name="bill_date" class="form-control"
+                               value="{{ inward.bill_date.strftime('%Y-%m-%d') if inward.bill_date }}">
+                    </div>
+                </div>
+
+                <div class="row">
+                    <div class="col-md-4 mb-3">
+                        <label class="form-label">Cost</label>
+                        <input type="number" name="cost" class="form-control" step="0.01" min="0"
+                               value="{{ inward.cost or 0 }}">
+                    </div>
+                    <div class="col-md-4 mb-3">
+                        <label class="form-label">Payment Method</label>
+                        <select name="payment_method" class="form-select">
+                            <option value="">Select Method</option>
+                            <option value="Cash" {% if inward.payment_method == 'Cash' %}selected{% endif %}>Cash</option>
+                            <option value="Bank Transfer" {% if inward.payment_method == 'Bank Transfer' %}selected{% endif %}>Bank Transfer</option>
+                            <option value="Credit" {% if inward.payment_method == 'Credit' %}selected{% endif %}>Credit</option>
+                            <option value="Cheque" {% if inward.payment_method == 'Cheque' %}selected{% endif %}>Cheque</option>
+                        </select>
+                    </div>
+                    <div class="col-md-4 mb-3">
+                        <label class="form-label">Pending Materials</label>
+                        <textarea name="pending_materials" class="form-control" rows="1">{{ inward.pending_materials or '' }}</textarea>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <div class="d-flex gap-2">
+            <button type="submit" class="btn btn-warning">Update Inward</button>
+            <a href="/material_inward" class="btn btn-secondary">Cancel</a>
+        </div>
+    </form>
+</div>
+{% endblock %}

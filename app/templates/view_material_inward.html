@@ -1,0 +1,53 @@
+{% extends "base.html" %}
+
+{% block title %}View Material Inward{% endblock %}
+
+{% block content %}
+<div class="container mt-4">
+    <h2>View Material Inward</h2>
+
+    <div class="card mb-4">
+        <div class="card-header bg-primary text-white">
+            <h5 class="mb-0">Material Inward Details</h5>
+        </div>
+        <div class="card-body">
+            <div class="row mb-3">
+                <div class="col-md-3">
+                    <strong>PO Number:</strong> {{ inward.po_no }}
+                </div>
+                <div class="col-md-3">
+                    <strong>Dealer Name:</strong> {{ inward.dealer_name }}
+                </div>
+                <div class="col-md-3">
+                    <strong>PO Date:</strong> {{ inward.po_date | dateformat }}
+                </div>
+                <div class="col-md-3">
+                    <strong>Date of Inward:</strong> {{ inward.date_of_inward | dateformat }}
+                </div>
+            </div>
+
+            <div class="row mb-3">
+                <div class="col-md-3">
+                    <strong>Bill Number:</strong> {{ inward.bill_no }}
+                </div>
+                <div class="col-md-3">
+                    <strong>Bill Date:</strong> {{ inward.bill_date | dateformat }}
+                </div>
+                <div class="col-md-3">
+                    <strong>Cost:</strong> {{ inward.cost | currency }}
+                </div>
+                <div class="col-md-3">
+                    <strong>Payment Method:</strong> {{ inward.payment_method }}
+                </div>
+            </div>
+
+            <div class="mb-3">
+                <strong>Pending Materials:</strong>
+                <p class="text-muted">{{ inward.pending_materials }}</p>
+            </div>
+        </div>
+    </div>
+
+    <a href="/material_inward" class="btn btn-secondary">Back to List</a>
+</div>
+{% endblock %}

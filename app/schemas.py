@@ -1,6 +1,6 @@
 from pydantic import BaseModel, EmailStr, Field
 from typing import List, Optional
-from datetime import datetime
+from datetime import datetime, date
 
 # Dealer Schemas
 class DealerBase(BaseModel):
@@ -201,3 +201,26 @@ class PurchaseOrder(PurchaseOrderBase):
     class Config:
         orm_mode = True
         from_attributes = True        
+
+class MaterialInwardBase(BaseModel):
+    po_no: int
+    dealer_name: Optional[str]
+    po_date: Optional[date]
+    date_of_inward: Optional[date]
+    bill_no: Optional[str]
+    bill_date: Optional[date]
+    cost: Optional[float]
+    payment_method: Optional[str]
+    pending_materials: Optional[str]
+
+class MaterialInwardCreate(MaterialInwardBase):
+    pass
+
+class MaterialInwardUpdate(MaterialInwardBase):
+    pass
+
+class MaterialInward(MaterialInwardBase):
+    id: int
+
+    class Config:
+        orm_mode = True        

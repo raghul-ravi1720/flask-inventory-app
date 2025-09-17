@@ -1,0 +1,71 @@
+{% extends "base.html" %}
+
+{% block title %}Material Inward - Inventory Management System{% endblock %}
+
+{% block content %}
+<div class="d-flex justify-content-between align-items-center mb-3">
+    <h1>Material Inward</h1>
+    <a href="/material_inward/add" class="btn btn-success">
+        <i class="bi bi-plus-lg"></i> Add New Inward
+    </a>
+</div>
+
+<div class="table-responsive">
+    <table class="table table-striped table-hover">
+        <thead class="table-dark">
+            <tr>
+                <th>ID</th>
+                <th>PO No</th>
+                <th>Dealer</th>
+                <th>PO Date</th>
+                <th>Date of Inward</th>
+                <th>Bill No</th>
+                <th>Bill Date</th>
+                <th>Cost</th>
+                <th>Payment Method</th>
+                <th>Pending Materials</th>
+                <th>Actions</th>
+            </tr>
+        </thead>
+        <tbody>
+            {% for inward in inwards %}
+            <tr>
+                <td>{{ inward.id }}</td>
+                <td>{{ inward.po_no }}</td>
+                <td>{{ inward.dealer_name or 'N/A' }}</td>
+                <td>{{ inward.po_date.strftime('%Y-%m-%d') if inward.po_date else 'N/A' }}</td>
+                <td>{{ inward.date_of_inward.strftime('%Y-%m-%d') if inward.date_of_inward else 'N/A' }}</td>
+                <td>{{ inward.bill_no or 'N/A' }}</td>
+                <td>{{ inward.bill_date.strftime('%Y-%m-%d') if inward.bill_date else 'N/A' }}</td>
+                <td>{{ inward.cost or 0 | round(2) }}</td>
+                <td>{{ inward.payment_method or 'N/A' }}</td>
+                <td>{{ inward.pending_materials or '-' }}</td>
+                <td>
+                    <div class="btn-group btn-group-sm">
+                        <a href="/material_inward/{{ inward.id }}" class="btn btn-info" title="View">
+                            <i class="bi bi-eye"></i>
+                        </a>
+                        <a href="/material_inward/edit/{{ inward.id }}" class="btn btn-warning" title="Edit">
+                            <i class="bi bi-pencil"></i>
+                        </a>
+                        <form action="/material_inward/delete/{{ inward.id }}" method="post" style="display:inline;">
+                            <button type="submit" class="btn btn-dark" onclick="return confirm('Are you sure?')" title="Delete">
+                                <i class="bi bi-trash"></i>
+                            </button>
+                        </form>
+                    </div>
+                </td>
+            </tr>
+            {% else %}
+            <tr>
+                <td colspan="11" class="text-center py-4">
+                    <i class="bi bi-inbox" style="font-size: 2rem;"></i>
+                    <p class="mt-2">No material inward records found.</p>
+                    <a href="/material_inward/add" class="btn btn-primary mt-2">Create First Inward Entry</a>
+                </td>
+            </tr>
+            {% endfor %}
+        </tbody>
+    </table>
+</div>
+{% endblock %}

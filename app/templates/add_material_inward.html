@@ -1,0 +1,110 @@
+{% extends "base.html" %}
+
+{% block title %}Add Material Inward - Inventory Management System{% endblock %}
+
+{% block content %}
+<div class="container mt-4">
+    <h2>Add Material Inward</h2>
+    
+    {% if error %}
+    <div class="alert alert-danger">{{ error }}</div>
+    {% endif %}
+    
+    <form method="post" action="/material_inward/add" id="materialInwardForm">
+        <div class="card mb-4">
+            <div class="card-header bg-primary text-white">
+                <h5 class="mb-0">Material Inward Details</h5>
+            </div>
+            <div class="card-body">
+                <div class="row mb-3">
+                    <div class="col-md-3">
+                        <label class="form-label">Select P.O</label>
+                        <select name="po_no" id="poSelect" class="form-select" required>
+                            <option value="">Select Purchase Order</option>
+                            {% for po in purchase_orders %}
+                            <option value="{{ po.po_no }}">{{ po.po_no }}</option>
+                            {% endfor %}
+                        </select>
+                    </div>
+                    <div class="col-md-3">
+                        <label class="form-label">Dealer Name</label>
+                        <input type="text" name="dealer_name" id="dealerName" class="form-control" readonly>
+                    </div>
+                    <div class="col-md-3">
+                        <label class="form-label">PO Date</label>
+                        <input type="date" name="po_date" id="poDate" class="form-control" readonly>
+                    </div>
+                    <div class="col-md-3">
+                        <label class="form-label">Inward Date</label>
+                        <input type="date" name="date_of_inward" id="inwardDate" class="form-control" value="{{ current_date.strftime('%Y-%m-%d') }}" required>
+                    </div>
+                </div>
+
+                <div class="row mb-3">
+                    <div class="col-md-3">
+                        <label class="form-label">Cost</label>
+                        <input type="number" name="cost" id="cost" class="form-control" step="0.01">                    </div>
+                    <div class="col-md-3">
+                        <label class="form-label">Bill Number</label>
+                        <input type="text" name="bill_no" class="form-control">
+                    </div>
+                    <div class="col-md-3">
+                        <label class="form-label">Bill Date</label>
+                        <input type="date" name="bill_date" class="form-control">
+                    </div>
+                    <div class="col-md-3 mb-3">
+                        <label class="form-label">Payment Method</label>
+                        <select name="payment_method" id="paymentMethod" class="form-select" required>
+                            <option value="">Select payment method</option>
+                            <option value="Cash">Cash</option>
+                            <option value="Bank Transfer">Bank Transfer</option>
+                            <option value="Cheque">Cheque</option>
+                            <option value="Credit">Credit</option>
+                        </select>
+                    </div>
+                </div>
+
+                <div class="mb-3">
+                    <label class="form-label">Pending Materials</label>
+                    <textarea name="pending_materials" class="form-control" rows="3"></textarea>
+                </div>
+            </div>
+        </div>
+
+        <button type="submit" class="btn btn-success">Save Material Inward</button>
+        <a href="/material_inward" class="btn btn-secondary">Cancel</a>
+    </form>
+</div>
+
+<script>
+document.getElementById('poSelect').addEventListener('change', function() {
+    const poNo = this.value;
+    if (!poNo) {
+        // Clear fields if no PO selected
+        document.getElementById('dealerName').value = '';
+        document.getElementById('poDate').value = '';
+        document.getElementById('cost').value = '';
+        return;
+    }
+
+    fetch(`/material_inward/api/po/${poNo}`)
+        .then(res => {
+            if (!res.ok) {
+                throw new Error('Failed to fetch PO details');
+            }
+            return res.json();
+        })
+        .then(data => {
+            document.getElementById('dealerName').value = data.dealer_name || '';
+            document.getElementById('poDate').value = data.po_date || '';
+            document.getElementById('cost').value = data.total_cost || 0;
+        })
+        .catch(err => {
+            console.error('Error fetching PO details:', err);
+            alert('Failed to fetch PO details. Please check the PO number and try again.');
+        });
+});
+
+// Remove the duplicate DOMContentLoaded event listener as it's causing conflicts
+</script>
+{% endblock %}

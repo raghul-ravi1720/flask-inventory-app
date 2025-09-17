@@ -26,6 +26,23 @@ async def get_purchase_order_api(po_no: int, db: Session = Depends(get_db)):
         raise HTTPException(status_code=404, detail="Purchase order not found")
     return purchase_order.__dict__
 
+@router.get("/{po_no}/details")
+def get_po_details(po_no: int, db: Session = Depends(get_db)):
+    po = db.query(models.PurchaseOrder).filter(models.PurchaseOrder.po_no == po_no).first()
+    if not po:
+        raise HTTPException(status_code=404, detail="Purchase Order not found")
+
+    # Get dealer name from the dealer relationship
+    dealer_name = po.dealer.name if po.dealer else None
+    total_cost = sum([item.quantity * item.price for item in po.items]) if hasattr(po, "items") else 0
+
+    return {
+        "po_no": po.po_no,
+        "dealer_name": dealer_name,  # Fixed this line
+        "po_date": po.date.strftime('%Y-%m-%d') if po.date else None,
+        "total_cost": total_cost
+    }
+
 # Frontend Routes
 @router.get("", response_class=HTMLResponse)
 async def list_purchase_orders(request: Request, db: Session = Depends(get_db)):
