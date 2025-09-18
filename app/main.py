@@ -216,6 +216,16 @@ except ImportError as e:
     import traceback
     traceback.print_exc()
 
+# Add Material Inward router
+try:
+    from app.routers import pending_materials
+    app.include_router(pending_materials.router, prefix="/pending_materials")
+    print("Pending materials router imported successfully")
+except ImportError as e:
+    print(f"Failed to import pending materials  router: {e}")
+    import traceback
+    traceback.print_exc()
+
 # Add this after the other router imports
 try:
     from app.routers import test

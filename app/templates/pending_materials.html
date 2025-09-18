@@ -1,0 +1,76 @@
+{% extends "base.html" %}
+
+{% block title %}Pending Materials - Inventory Management System{% endblock %}
+
+{% block content %}
+<div class="container mt-4">
+    <h2>Pending Materials</h2>
+    
+    <div class="table-responsive">
+        <table class="table table-striped">
+            <thead>
+                <tr>
+                    <th>PO Item</th>
+                    <th>Material</th>
+                    <th>Pending Qty</th>
+                    <th>Inward Date</th>
+                    <th>Bill No</th>
+                    <th>Actions</th>
+                </tr>
+            </thead>
+            <tbody>
+                {% for pending in pending_materials %}
+                <tr>
+                    <td>{{ pending.po_item.material_name }}</td>
+                    <td>{{ pending.po_item.spec }} - {{ pending.po_item.brand }}</td>
+                    <td>{{ pending.pending_quantity }} {{ pending.po_item.unit }}</td>
+                    <td>{{ pending.material_inward.date_of_inward.strftime('%Y-%m-%d') if pending.material_inward.date_of_inward }}</td>
+                    <td>{{ pending.material_inward.bill_no or 'N/A' }}</td>
+                    <td>
+                        <button type="button" class="btn btn-sm btn-primary" data-bs-toggle="modal" data-bs-target="#resolveModal{{ pending.id }}">
+                            Resolve
+                        </button>
+                    </td>
+                </tr>
+                
+                <!-- Resolve Modal -->
+                <div class="modal fade" id="resolveModal{{ pending.id }}" tabindex="-1" aria-hidden="true">
+                    <div class="modal-dialog">
+                        <div class="modal-content">
+                            <div class="modal-header">
+                                <h5 class="modal-title">Resolve Pending Material</h5>
+                                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+                            </div>
+                            <form action="/material_inward/pending/resolve/{{ pending.id }}" method="post" enctype="multipart/form-data">
+                                <div class="modal-body">
+                                    <div class="mb-3">
+                                        <label class="form-label">Resolution Bill Number</label>
+                                        <input type="text" name="resolution_bill_no" class="form-control" required>
+                                    </div>
+                                    <div class="mb-3">
+                                        <label class="form-label">Resolution Date</label>
+                                        <input type="date" name="resolution_date" class="form-control" required>
+                                    </div>
+                                    <div class="mb-3">
+                                        <label class="form-label">Proof Document</label>
+                                        <input type="file" name="proof_document" class="form-control">
+                                    </div>
+                                </div>
+                                <div class="modal-footer">
+                                    <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancel</button>
+                                    <button type="submit" class="btn btn-primary">Resolve</button>
+                                </div>
+                            </form>
+                        </div>
+                    </div>
+                </div>
+                {% else %}
+                <tr>
+                    <td colspan="6" class="text-center">No pending materials found</td>
+                </tr>
+                {% endfor %}
+            </tbody>
+        </table>
+    </div>
+</div>
+{% endblock %}

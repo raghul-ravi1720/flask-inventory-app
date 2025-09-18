@@ -249,6 +249,7 @@ class PurchaseOrderItem(Base):
     purchase_order = relationship('PurchaseOrder', back_populates='items')
     material = relationship('Storage', back_populates='po_items')
 
+
 class MaterialInward(Base):
     __tablename__ = 'material_inward'
     
@@ -261,7 +262,78 @@ class MaterialInward(Base):
     bill_date = Column(Date)
     cost = Column(Float)
     payment_method = Column(String(64))
-    pending_materials = Column(Text)
+    status = Column(String(20), default='partial')  # partial, completed
+    is_pending_inward = Column(Boolean, default=False)  # Flag for pending material inwards
+    
+    # Relationships
+    items = relationship('MaterialInwardItem', back_populates='material_inward')
+    pending_materials_list = relationship('PendingMaterial', back_populates='material_inward')
+    resolution_history = relationship('PendingMaterialResolution', back_populates='material_inward')
+    purchase_order = relationship('PurchaseOrder')
+
+class MaterialInwardItem(Base):
+    __tablename__ = 'material_inward_items'
+    
+    id = Column(Integer, primary_key=True)
+    material_inward_id = Column(Integer, ForeignKey('material_inward.id'))
+    po_item_id = Column(Integer, ForeignKey('purchase_order_item.id'))
+    material_name = Column(String(256))
+    spec = Column(String(256))
+    brand = Column(String(128))
+    ordered_quantity = Column(Integer)
+    quantity_received = Column(Integer, default=0)
+    unit = Column(String(50))
+    status = Column(String(20), default='pending')  # pending, partial, completed
+    
+    material_inward = relationship('MaterialInward', back_populates='items')
+    po_item = relationship('PurchaseOrderItem')
+
+
+
+# Add a new model for tracking resolution of pending materials
+class PendingMaterialResolution(Base):
+    __tablename__ = 'pending_material_resolution'
+    
+    id = Column(Integer, primary_key=True)
+    material_inward_id = Column(Integer, ForeignKey('material_inward.id'))
+    pending_material_id = Column(Integer, ForeignKey('pending_materials.id'))
+    resolution_date = Column(Date, default=date.today)
+    resolution_bill_no = Column(String(64))
+    resolved_quantity = Column(Integer)
+    proof_document_path = Column(String(255))
+    notes = Column(Text)
+    
+    material_inward = relationship('MaterialInward', back_populates='resolution_history')
+    pending_material = relationship('PendingMaterial', back_populates='resolutions')
+
+
+
+# Update the PendingMaterial model
+class PendingMaterial(Base):
+    __tablename__ = 'pending_materials'
+    
+    id = Column(Integer, primary_key=True)
+    po_no = Column(Integer, ForeignKey('purchase_order.po_no'))
+    po_item_id = Column(Integer, ForeignKey('purchase_order_item.id'))
+    material_name = Column(String(256))
+    spec = Column(String(256))
+    brand = Column(String(128))
+    ordered_quantity = Column(Integer)
+    received_quantity = Column(Integer, default=0)
+    pending_quantity = Column(Integer)
+    unit = Column(String(50))
+    status = Column(String(20), default='pending')  # pending, partially_resolved, resolved
+    original_inward_id = Column(Integer, ForeignKey('material_inward.id'))
+    
+    purchase_order = relationship('PurchaseOrder')
+    po_item = relationship('PurchaseOrderItem')
+    original_inward = relationship('MaterialInward')
+    material_inward = relationship('MaterialInward', back_populates='pending_materials_list')
+    resolutions = relationship(
+        "PendingMaterialResolution",
+        back_populates="pending_material",
+        cascade="all, delete-orphan"
+    )
 
 class MaterialOutward(Base):
     __tablename__ = 'material_outward'

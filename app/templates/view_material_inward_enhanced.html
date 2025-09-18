@@ -1,0 +1,163 @@
+{% extends "base.html" %}
+
+{% block title %}View Material Inward{% endblock %}
+
+{% block content %}
+<div class="container mt-4">
+    <h2>View Material Inward #{{ inward.id }}</h2>
+
+    <!-- In the Material Inward Details section -->
+    <div class="card mb-4">
+        <div class="card-header bg-primary text-white">
+            <h5 class="mb-0">Material Inward Details</h5>
+        </div>
+        <div class="card-body">
+            <div class="row mb-3">
+                <div class="col-md-3">
+                    <strong>PO Number:</strong> {{ inward.po_no }}
+                </div>
+                <div class="col-md-3">
+                    <strong>Dealer Name:</strong> {{ inward.dealer_name }}
+                </div>
+                <div class="col-md-3">
+                    <strong>PO Date:</strong> {{ inward.po_date.strftime('%Y-%m-%d') if inward.po_date }}
+                </div>
+                <div class="col-md-3">
+                    <strong>Date of Inward:</strong> {{ inward.date_of_inward.strftime('%Y-%m-%d') if inward.date_of_inward }}
+                </div>
+            </div>
+
+            <div class="row mb-3">
+                <div class="col-md-3">
+                    <strong>Bill Number:</strong> {{ inward.bill_no or 'N/A' }}
+                </div>
+                <div class="col-md-3">
+                    <strong>Bill Date:</strong> {{ inward.bill_date.strftime('%Y-%m-%d') if inward.bill_date }}
+                </div>
+                <div class="col-md-3">
+                    <strong>Cost:</strong> {{ inward.cost | currency }}
+                </div>
+                <div class="col-md-3">
+                    <strong>Payment Method:</strong> {{ inward.payment_method }}
+                </div>
+            </div>
+
+            <div class="row mb-3">
+                <div class="col-md-3">
+                    <strong>Status:</strong> 
+                    <span class="badge bg-{% if inward.status == 'completed' %}success{% else %}warning{% endif %}">
+                        {{ inward.status | title }}
+                    </span>
+                </div>
+                <div class="col-md-3">
+                    <strong>Type:</strong> 
+                    <span class="badge bg-{% if inward.is_pending_inward %}info{% else %}primary{% endif %}">
+                        {{ "Pending Materials" if inward.is_pending_inward else "Initial Inward" }}
+                    </span>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Received Items -->
+    <div class="card mb-4">
+        <div class="card-header bg-success text-white">
+            <h5 class="mb-0">Received Items</h5>
+        </div>
+        <div class="card-body">
+            <div class="table-responsive">
+                <table class="table table-striped">
+                    <thead>
+                        <tr>
+                            <th>Material</th>
+                            <th>Spec</th>
+                            <th>Brand</th>
+                            <th>Ordered Qty</th>
+                            <th>Received Qty</th>
+                            <th>Unit</th>
+                            <th>Status</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        {% for item in inward.items %}
+                        <tr>
+                            <td>{{ item.material_name }}</td>
+                            <td>{{ item.spec or 'N/A' }}</td>
+                            <td>{{ item.brand or 'N/A' }}</td>
+                            <td>{{ item.ordered_quantity }}</td>
+                            <td>{{ item.quantity_received }}</td>
+                            <td>{{ item.unit }}</td>
+                            <td>
+                                <span class="badge bg-{% if item.status == 'completed' %}success{% else %}warning{% endif %}">
+                                    {{ item.status | title }}
+                                </span>
+                            </td>
+                        </tr>
+                        {% else %}
+                        <tr>
+                            <td colspan="7" class="text-center">No items received yet</td>
+                        </tr>
+                        {% endfor %}
+                    </tbody>
+                </table>
+            </div>
+        </div>
+    </div>
+
+    <!-- Pending Materials -->
+    {% if pending_materials %}
+    <div class="card mb-4">
+        <div class="card-header bg-warning text-dark">
+            <h5 class="mb-0">Pending Materials</h5>
+        </div>
+        <div class="card-body">
+            <div class="table-responsive">
+                <table class="table table-striped">
+                    <thead>
+                        <tr>
+                            <th>Material</th>
+                            <th>Spec</th>
+                            <th>Brand</th>
+                            <th>Ordered Qty</th>
+                            <th>Received Qty</th>
+                            <th>Pending Qty</th>
+                            <th>Unit</th>
+                            <th>Status</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        {% for pending in pending_materials %}
+                        <tr>
+                            <td>{{ pending.material_name }}</td>
+                            <td>{{ pending.spec or 'N/A' }}</td>
+                            <td>{{ pending.brand or 'N/A' }}</td>
+                            <td>{{ pending.ordered_quantity }}</td>
+                            <td>{{ pending.received_quantity }}</td>
+                            <td>{{ pending.pending_quantity }}</td>
+                            <td>{{ pending.unit }}</td>
+                            <td>
+                                <span class="badge bg-{% if pending.status == 'resolved' %}success{% else %}warning{% endif %}">
+                                    {{ pending.status | title }}
+                                </span>
+                            </td>
+                        </tr>
+                        {% endfor %}
+                    </tbody>
+                </table>
+            </div>
+        </div>
+    </div>
+    
+    <div class="mb-4">
+        <a href="/pending_materials/update/{{ inward.po_no }}" class="btn btn-primary">Update Pending Materials</a>
+    </div>
+    {% endif %}
+
+    <div class="mb-4">
+        <a href="/material_inward" class="btn btn-secondary">Back to List</a>
+        {% if inward.status != 'completed' %}
+        <a href="/material_inward/{{ inward.id }}/add_pending" class="btn btn-warning">Add Pending Materials</a>
+        {% endif %}
+    </div>
+</div>
+{% endblock %}

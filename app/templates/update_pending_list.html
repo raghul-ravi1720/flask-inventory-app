@@ -1,0 +1,105 @@
+{% extends "base.html" %}
+
+{% block title %}Update Pending Materials - Inventory Management System{% endblock %}
+
+{% block content %}
+<div class="container mt-4">
+    <h2>Update Pending Materials for PO #{{ po_no }}</h2>
+    
+    {% if error %}
+    <div class="alert alert-danger">{{ error }}</div>
+    {% endif %}
+    
+    <form method="post" action="/pending_materials/update/{{ po_no }}">
+        <div class="card mb-4">
+            <div class="card-header bg-primary text-white">
+                <h5 class="mb-0">Material Inward Details</h5>
+            </div>
+            <div class="card-body">
+                <div class="row mb-3">
+                    <div class="col-md-3">
+                        <label class="form-label">Dealer Name</label>
+                        <input type="text" name="dealer_name" class="form-control" value="{{ po.dealer.name if po.dealer else '' }}" readonly>
+                    </div>
+                    <div class="col-md-3">
+                        <label class="form-label">PO Date</label>
+                        <input type="date" name="po_date" class="form-control" value="{{ po.date.strftime('%Y-%m-%d') if po.date else '' }}" readonly>
+                    </div>
+                    <div class="col-md-3">
+                        <label class="form-label">Bill Number</label>
+                        <input type="text" name="bill_no" class="form-control" required>
+                    </div>
+                    <div class="col-md-3">
+                        <label class="form-label">Bill Date</label>
+                        <input type="date" name="bill_date" class="form-control" value="{{ current_date.strftime('%Y-%m-%d') }}" required>
+                    </div>
+                </div>
+                <div class="row mb-3">
+                    <div class="col-md-3">
+                        <label class="form-label">Cost</label>
+                        <input type="number" name="cost" class="form-control" step="0.01" required>
+                    </div>
+                    <div class="col-md-3">
+                        <label class="form-label">Payment Method</label>
+                        <select name="payment_method" class="form-select" required>
+                            <option value="">Select payment method</option>
+                            <option value="Cash">Cash</option>
+                            <option value="Bank Transfer">Bank Transfer</option>
+                            <option value="Cheque">Cheque</option>
+                            <option value="Credit">Credit</option>
+                        </select>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <div class="card mb-4">
+            <div class="card-header bg-warning text-dark">
+                <h5 class="mb-0">Pending Materials</h5>
+            </div>
+            <div class="card-body">
+                <table class="table">
+                    <thead>
+                        <tr>
+                            <th>Material</th>
+                            <th>Spec</th>
+                            <th>Brand</th>
+                            <th>Ordered Qty</th>
+                            <th>Previously Received</th>
+                            <th>Pending Qty</th>
+                            <th>Unit</th>
+                            <th>Quantity to Receive</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        {% for pending in pending_materials %}
+                        <tr>
+                            <td>{{ pending.material_name }}</td>
+                            <td>{{ pending.spec or 'N/A' }}</td>
+                            <td>{{ pending.brand or 'N/A' }}</td>
+                            <td>{{ pending.ordered_quantity }}</td>
+                            <td>{{ pending.received_quantity }}</td>
+                            <td>{{ pending.pending_quantity }}</td>
+                            <td>{{ pending.unit }}</td>
+                            <td>
+                                <input type="number" name="items[{{ loop.index0 }}][quantity_received]" 
+                                       class="form-control" min="0" max="{{ pending.pending_quantity }}" 
+                                       value="{{ pending.pending_quantity }}">
+                                <input type="hidden" name="items[{{ loop.index0 }}][id]" value="{{ pending.id }}">
+                            </td>
+                        </tr>
+                        {% else %}
+                        <tr>
+                            <td colspan="8" class="text-center">No pending materials found</td>
+                        </tr>
+                        {% endfor %}
+                    </tbody>
+                </table>
+            </div>
+        </div>
+
+        <button type="submit" class="btn btn-success">Update Pending Materials</button>
+        <a href="/pending_materials" class="btn btn-secondary">Cancel</a>
+    </form>
+</div>
+{% endblock %}

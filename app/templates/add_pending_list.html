@@ -1,0 +1,90 @@
+{% extends "base.html" %}
+
+{% block title %}Add Pending Materials - Inventory Management System{% endblock %}
+
+{% block content %}
+<div class="container mt-4">
+    <h2>Add Pending Materials from Material Inward #{{ inward.id }}</h2>
+    
+    {% if error %}
+    <div class="alert alert-danger">{{ error }}</div>
+    {% endif %}
+    
+    <form method="post" action="/pending_materials/add/{{ inward.id }}">
+        <div class="card mb-4">
+            <div class="card-header bg-primary text-white">
+                <h5 class="mb-0">PO Details</h5>
+            </div>
+            <div class="card-body">
+                <div class="row">
+                    <div class="col-md-3">
+                        <strong>PO Number:</strong> {{ inward.po_no }}
+                    </div>
+                    <div class="col-md-3">
+                        <strong>Dealer Name:</strong> {{ inward.dealer_name }}
+                    </div>
+                    <div class="col-md-3">
+                        <strong>PO Date:</strong> {{ inward.po_date.strftime('%Y-%m-%d') if inward.po_date }}
+                    </div>
+                    <div class="col-md-3">
+                        <strong>Inward Date:</strong> {{ inward.date_of_inward.strftime('%Y-%m-%d') if inward.date_of_inward }}
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <div class="card mb-4">
+            <div class="card-header bg-warning text-dark">
+                <h5 class="mb-0">Pending Materials</h5>
+            </div>
+            <div class="card-body">
+                <table class="table">
+                    <thead>
+                        <tr>
+                            <th>Mark as Pending</th>
+                            <th>Material</th>
+                            <th>Spec</th>
+                            <th>Brand</th>
+                            <th>Ordered Qty</th>
+                            <th>Received Qty</th>
+                            <th>Pending Qty</th>
+                            <th>Unit</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        {% for item in pending_items %}
+                        <tr>
+                            <td>
+                                <input type="checkbox" name="items[{{ loop.index0 }}][is_pending]" checked>
+                                <input type="hidden" name="items[{{ loop.index0 }}][po_item_id]" value="{{ item.po_item_id }}">
+                                <input type="hidden" name="items[{{ loop.index0 }}][material_name]" value="{{ item.material_name }}">
+                                <input type="hidden" name="items[{{ loop.index0 }}][spec]" value="{{ item.spec }}">
+                                <input type="hidden" name="items[{{ loop.index0 }}][brand]" value="{{ item.brand }}">
+                                <input type="hidden" name="items[{{ loop.index0 }}][ordered_quantity]" value="{{ item.ordered_quantity }}">
+                                <input type="hidden" name="items[{{ loop.index0 }}][received_quantity]" value="{{ item.received_quantity }}">
+                                <input type="hidden" name="items[{{ loop.index0 }}][pending_quantity]" value="{{ item.pending_quantity }}">
+                                <input type="hidden" name="items[{{ loop.index0 }}][unit]" value="{{ item.unit }}">
+                            </td>
+                            <td>{{ item.material_name }}</td>
+                            <td>{{ item.spec or 'N/A' }}</td>
+                            <td>{{ item.brand or 'N/A' }}</td>
+                            <td>{{ item.ordered_quantity }}</td>
+                            <td>{{ item.received_quantity }}</td>
+                            <td>{{ item.pending_quantity }}</td>
+                            <td>{{ item.unit }}</td>
+                        </tr>
+                        {% else %}
+                        <tr>
+                            <td colspan="8" class="text-center">No pending materials found</td>
+                        </tr>
+                        {% endfor %}
+                    </tbody>
+                </table>
+            </div>
+        </div>
+
+        <button type="submit" class="btn btn-success">Save Pending Materials</button>
+        <a href="/material_inward" class="btn btn-secondary">Cancel</a>
+    </form>
+</div>
+{% endblock %}

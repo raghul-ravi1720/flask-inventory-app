@@ -1,0 +1,56 @@
+{% extends "base.html" %}
+
+{% block title %}Pending Materials - Inventory Management System{% endblock %}
+
+{% block content %}
+<div class="container mt-4">
+    <h2>Pending Materials</h2>
+    
+    <div class="table-responsive">
+        <table class="table table-striped">
+            <thead>
+                <tr>
+                    <th>PO No</th>
+                    <th>Material</th>
+                    <th>Spec</th>
+                    <th>Brand</th>
+                    <th>Ordered Qty</th>
+                    <th>Received Qty</th>
+                    <th>Pending Qty</th>
+                    <th>Unit</th>
+                    <th>Status</th>
+                    <th>Actions</th>
+                </tr>
+            </thead>
+            <tbody>
+                {% for pending in pending_materials %}
+                <tr>
+                    <td>{{ pending.po_no }}</td>
+                    <td>{{ pending.material_name }}</td>
+                    <td>{{ pending.spec or 'N/A' }}</td>
+                    <td>{{ pending.brand or 'N/A' }}</td>
+                    <td>{{ pending.ordered_quantity }}</td>
+                    <td>{{ pending.received_quantity }}</td>
+                    <td>{{ pending.pending_quantity }}</td>
+                    <td>{{ pending.unit }}</td>
+                    <td>
+                        <span class="badge bg-{% if pending.status == 'resolved' %}success{% else %}warning{% endif %}">
+                            {{ pending.status | title }}
+                        </span>
+                    </td>
+                    <td>
+                        <a href="/pending_materials/update/{{ pending.po_no }}" class="btn btn-sm btn-primary">
+                            Update
+                        </a>
+                    </td>
+                </tr>
+                {% else %}
+                <tr>
+                    <td colspan="10" class="text-center">No pending materials found</td>
+                </tr>
+                {% endfor %}
+            </tbody>
+        </table>
+    </div>
+</div>
+{% endblock %}

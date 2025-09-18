@@ -1,0 +1,413 @@
+{% extends "base.html" %}
+
+{% block title %}Add Material Inward - Inventory Management System{% endblock %}
+
+{% block content %}
+<div class="container mt-4">
+    <h2>Add Material Inward</h2>
+    
+    {% if error %}
+    <div class="alert alert-danger">{{ error }}</div>
+    {% endif %}
+    
+    <form method="post" action="/material_inward/add" id="materialInwardForm">
+        <div class="card mb-4">
+            <div class="card-header bg-primary text-white">
+                <h5 class="mb-0">Material Inward Details</h5>
+            </div>
+            <div class="card-body">
+                <div class="row mb-3">
+                    <div class="col-md-3">
+                        <label class="form-label">Select P.O</label>
+                        <select name="po_no" id="poSelect" class="form-select" required>
+                            <option value="">Select Purchase Order</option>
+                            {% for po in purchase_orders %}
+                            <option value="{{ po.po_no }}">{{ po.po_no }}</option>
+                            {% endfor %}
+                        </select>
+                    </div>
+                    <div class="col-md-3">
+                        <label class="form-label">Dealer Name</label>
+                        <input type="text" name="dealer_name" id="dealerName" class="form-control" readonly>
+                    </div>
+                    <div class="col-md-3">
+                        <label class="form-label">PO Date</label>
+                        <input type="date" name="po_date" id="poDate" class="form-control" readonly>
+                    </div>
+                    <div class="col-md-3">
+                        <label class="form-label">Inward Date</label>
+                        <input type="date" name="date_of_inward" id="inwardDate" class="form-control" value="{{ current_date.strftime('%Y-%m-%d') }}" required>
+                    </div>
+                </div>
+
+                <div class="row mb-3">
+                    <div class="col-md-3">
+                        <label class="form-label">Cost</label>
+                        <input type="number" name="cost" id="cost" class="form-control" step="0.01">
+                    </div>
+                    <div class="col-md-3">
+                        <label class="form-label">Bill Number</label>
+                        <input type="text" name="bill_no" class="form-control">
+                    </div>
+                    <div class="col-md-3">
+                        <label class="form-label">Bill Date</label>
+                        <input type="date" name="bill_date" class="form-control">
+                    </div>
+                    <div class="col-md-3 mb-3">
+                        <label class="form-label">Payment Method</label>
+                        <select name="payment_method" id="paymentMethod" class="form-select" required>
+                            <option value="">Select payment method</option>
+                            <option value="Cash">Cash</option>
+                            <option value="Bank Transfer">Bank Transfer</option>
+                            <option value="Cheque">Cheque</option>
+                            <option value="Credit">Credit</option>
+                        </select>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- PO Items Section -->
+        <div class="card mb-4" id="poItemsSection" style="display: none;">
+            <div class="card-header bg-info text-white">
+                <h5 class="mb-0">PO Items</h5>
+            </div>
+            <div class="card-body">
+                <table class="table" id="poItemsTable">
+                    <thead>
+                        <tr>
+                            <th>Received</th>
+                            <th>Material</th>
+                            <th>Spec</th>
+                            <th>Brand</th>
+                            <th>Ordered Qty</th>
+                            <th>Pending Qty</th>
+                            <th>Unit</th>
+                            <th>Received Qty</th>
+                            <th>Full Qty</th>
+                            <th>Status</th>
+                        </tr>
+                    </thead>
+                    <tbody id="poItemsTableBody">
+                        <!-- Will be populated by JavaScript -->
+                    </tbody>
+                </table>
+            </div>
+        </div>
+
+        <!-- Pending Materials Section -->
+        <div class="card mb-4" id="pendingMaterialsSection" style="display: none;">
+            <div class="card-header bg-warning text-dark">
+                <h5 class="mb-0">Pending Materials</h5>
+            </div>
+            <div class="card-body">
+                <div id="pendingMaterialsList">
+                    <!-- Will be populated by JavaScript -->
+                </div>
+            </div>
+        </div>
+
+        <button type="submit" class="btn btn-success">Save Material Inward</button>
+        <a href="/material_inward" class="btn btn-secondary">Cancel</a>
+    </form>
+</div>
+
+<script>
+// Store the current state of items
+let currentItemsState = {};
+
+document.getElementById('poSelect').addEventListener('change', function() {
+    const poNo = this.value;
+    if (!poNo) {
+        document.getElementById('dealerName').value = '';
+        document.getElementById('poDate').value = '';
+        document.getElementById('cost').value = '';
+        document.getElementById('poItemsSection').style.display = 'none';
+        document.getElementById('pendingMaterialsSection').style.display = 'none';
+        return;
+    }
+
+    fetch(`/material_inward/api/po/${poNo}`)
+        .then(res => {
+            if (!res.ok) {
+                throw new Error('Failed to fetch PO details');
+            }
+            return res.json();
+        })
+        .then(data => {
+            document.getElementById('dealerName').value = data.dealer_name || '';
+            document.getElementById('poDate').value = data.po_date || '';
+            document.getElementById('cost').value = data.total_cost || 0;
+            
+            // Populate PO items table
+            if (data.items && data.items.length > 0) {
+                const tableBody = document.getElementById('poItemsTableBody');
+                tableBody.innerHTML = '';
+                
+                // Reset current items state
+                currentItemsState = {};
+                
+                data.items.forEach((item, index) => {
+                    const hasPending = item.has_pending;
+                    const receivedQty = hasPending ? item.received_quantity : 0;
+                    const isFullyReceived = receivedQty === item.ordered_quantity;
+                    const isPartiallyReceived = receivedQty > 0 && receivedQty < item.ordered_quantity;
+                    
+                    // Store initial state
+                    currentItemsState[item.id] = {
+                        material_name: item.material_name,
+                        spec: item.spec,
+                        brand: item.brand,
+                        ordered_quantity: item.ordered_quantity,
+                        unit: item.unit,
+                        received_quantity: receivedQty,
+                        status: isFullyReceived ? 'completed' : (isPartiallyReceived ? 'partial' : 'pending')
+                    };
+                    
+                    const row = document.createElement('tr');
+                    row.innerHTML = `
+                        <td>
+                            <input type="checkbox" name="items[${index}][received]" class="material-received" 
+                                ${isFullyReceived || isPartiallyReceived ? 'checked' : ''}>
+                            <input type="hidden" name="items[${index}][id]" value="${item.id}">
+                            <input type="hidden" name="items[${index}][material_name]" value="${item.material_name}">
+                            <input type="hidden" name="items[${index}][ordered_quantity]" value="${item.ordered_quantity}">
+                            <input type="hidden" name="items[${index}][unit]" value="${item.unit}">
+                        </td>
+                        <td>${item.material_name}</td>
+                        <td>${item.spec || 'N/A'}</td>
+                        <td>${item.brand || 'N/A'}</td>
+                        <td>${item.ordered_quantity}</td>
+                        <td>${hasPending ? item.pending_quantity : 0}</td>
+                        <td>${item.unit}</td>
+                        <td>
+                            <input type="number" name="items[${index}][quantity_received]" class="form-control received-quantity" 
+                                min="0" max="${item.ordered_quantity}" value="${receivedQty}" 
+                                ${isFullyReceived || isPartiallyReceived ? '' : 'disabled'}>
+                        </td>
+                        <td>
+                            <input type="checkbox" name="items[${index}][full_quantity]" class="full-quantity" 
+                                ${isFullyReceived ? 'checked' : ''} 
+                                ${isPartiallyReceived ? '' : 'disabled'}>
+                        </td>
+                        <td class="status-cell">
+                            ${isFullyReceived ? 'Completed' : isPartiallyReceived ? 'Partial' : 'Pending'}
+                        </td>
+                    `;
+                    tableBody.appendChild(row);
+                });
+                
+                document.getElementById('poItemsSection').style.display = 'block';
+                
+                // Add event listeners
+                addEventListenersToItems();
+                
+                // Update pending materials
+                updatePendingMaterials();
+                
+                // Show pending materials section if there are pending materials
+                if (data.has_pending_materials) {
+                    fetchPendingMaterials(poNo);
+                }
+            }
+        })
+        .catch(err => {
+            console.error('Error fetching PO details:', err);
+            alert('Failed to fetch PO details. Please check the PO number and try again.');
+        });
+});
+
+function fetchPendingMaterials(poNo) {
+    fetch(`/material_inward/api/po/${poNo}/pending`)
+        .then(res => res.json())
+        .then(pendingData => {
+            const pendingList = document.getElementById('pendingMaterialsList');
+            pendingList.innerHTML = '<h6>Existing Pending Materials</h6>';
+            
+            if (pendingData.pending_materials && pendingData.pending_materials.length > 0) {
+                pendingData.pending_materials.forEach(pending => {
+                    const pendingItem = document.createElement('div');
+                    pendingItem.className = 'card mb-2';
+                    pendingItem.innerHTML = `
+                        <div class="card-body">
+                            <h6 class="card-title">${pending.material_name}</h6>
+                            <p class="card-text">
+                                Spec: ${pending.spec || 'N/A'}<br>
+                                Brand: ${pending.brand || 'N/A'}<br>
+                                Ordered: ${pending.ordered_quantity} ${pending.unit}<br>
+                                Received: ${pending.received_quantity} ${pending.unit}<br>
+                                Pending: ${pending.pending_quantity} ${pending.unit}<br>
+                                Status: ${pending.status}
+                            </p>
+                            <div class="form-check">
+                                <input class="form-check-input" type="checkbox" name="resolve_pending[]" value="${pending.id}">
+                                <label class="form-check-label">Mark as resolved in this inward</label>
+                            </div>
+                            <div class="resolve-details mt-2" style="display: none;">
+                                <div class="mb-2">
+                                    <label class="form-label">Quantity Received</label>
+                                    <input type="number" name="resolve_quantity[${pending.id}]" class="form-control" min="1" max="${pending.pending_quantity}" value="${pending.pending_quantity}">
+                                </div>
+                            </div>
+                        </div>
+                    `;
+                    pendingList.appendChild(pendingItem);
+                    
+                    // Add event listener to resolve checkbox
+                    const resolveCheckbox = pendingItem.querySelector('.form-check-input');
+                    const resolveDetails = pendingItem.querySelector('.resolve-details');
+                    
+                    resolveCheckbox.addEventListener('change', function() {
+                        resolveDetails.style.display = this.checked ? 'block' : 'none';
+                    });
+                });
+                
+                document.getElementById('pendingMaterialsSection').style.display = 'block';
+            } else {
+                document.getElementById('pendingMaterialsSection').style.display = 'none';
+            }
+        });
+}
+
+function addEventListenersToItems() {
+    // Add event listeners to checkboxes
+    document.querySelectorAll('.material-received').forEach(checkbox => {
+        checkbox.addEventListener('change', function() {
+            const row = this.closest('tr');
+            const itemId = row.querySelector('input[name$="[id]"]').value;
+            const quantityInput = row.querySelector('.received-quantity');
+            const fullQuantityCheckbox = row.querySelector('.full-quantity');
+            const statusCell = row.querySelector('.status-cell');
+            const orderedQty = parseInt(row.querySelector('td:nth-child(5)').textContent);
+            
+            if (this.checked) {
+                quantityInput.disabled = false;
+                const currentValue = parseInt(quantityInput.value) || 0;
+                quantityInput.value = currentValue > 0 ? currentValue : orderedQty;
+                fullQuantityCheckbox.disabled = false;
+                fullQuantityCheckbox.checked = quantityInput.value == orderedQty;
+                statusCell.textContent = quantityInput.value == orderedQty ? 'Completed' : 'Partial';
+                
+                // Update current state
+                currentItemsState[itemId].received_quantity = parseInt(quantityInput.value);
+                currentItemsState[itemId].status = quantityInput.value == orderedQty ? 'completed' : 'partial';
+            } else {
+                quantityInput.disabled = true;
+                quantityInput.value = 0;
+                fullQuantityCheckbox.checked = false;
+                fullQuantityCheckbox.disabled = true;
+                statusCell.textContent = 'Pending';
+                
+                // Update current state
+                currentItemsState[itemId].received_quantity = 0;
+                currentItemsState[itemId].status = 'pending';
+            }
+            updatePendingMaterials();
+        });
+    });
+    
+    // Add event listeners to quantity inputs
+    document.querySelectorAll('.received-quantity').forEach(input => {
+        input.addEventListener('change', function() {
+            const row = this.closest('tr');
+            const itemId = row.querySelector('input[name$="[id]"]').value;
+            const orderedQty = parseInt(row.querySelector('td:nth-child(5)').textContent);
+            const value = parseInt(this.value) || 0;
+            const statusCell = row.querySelector('.status-cell');
+            const fullQuantityCheckbox = row.querySelector('.full-quantity');
+            const receivedCheckbox = row.querySelector('.material-received');
+            
+            if (value === orderedQty) {
+                statusCell.textContent = 'Completed';
+                fullQuantityCheckbox.checked = true;
+                receivedCheckbox.checked = true;
+            } else if (value > 0) {
+                statusCell.textContent = 'Partial';
+                fullQuantityCheckbox.checked = false;
+                receivedCheckbox.checked = true;
+            } else {
+                statusCell.textContent = 'Pending';
+                fullQuantityCheckbox.checked = false;
+                receivedCheckbox.checked = false;
+            }
+            
+            // Update current state
+            currentItemsState[itemId].received_quantity = value;
+            currentItemsState[itemId].status = value === orderedQty ? 'completed' : (value > 0 ? 'partial' : 'pending');
+            
+            updatePendingMaterials();
+        });
+    });
+    
+    // Add event listeners to full quantity checkboxes
+    document.querySelectorAll('.full-quantity').forEach(checkbox => {
+        checkbox.addEventListener('change', function() {
+            if (this.checked) {
+                const row = this.closest('tr');
+                const itemId = row.querySelector('input[name$="[id]"]').value;
+                const quantityInput = row.querySelector('.received-quantity');
+                const orderedQty = parseInt(row.querySelector('td:nth-child(5)').textContent);
+                quantityInput.value = orderedQty;
+                quantityInput.disabled = false;
+                row.querySelector('.material-received').checked = true;
+                row.querySelector('.status-cell').textContent = 'Completed';
+                
+                // Update current state
+                currentItemsState[itemId].received_quantity = orderedQty;
+                currentItemsState[itemId].status = 'completed';
+            }
+            updatePendingMaterials();
+        });
+    });
+}
+
+function updatePendingMaterials() {
+    const pendingList = document.getElementById('pendingMaterialsList');
+    let hasNewPending = false;
+    
+    // Clear any existing "New Pending Materials" section
+    const existingNewSections = document.querySelectorAll('#pendingMaterialsList > div:not(:first-child)');
+    existingNewSections.forEach(section => {
+        if (!section.classList.contains('existing-pending')) {
+            section.remove();
+        }
+    });
+    
+    // Create a new section for new pending materials
+    const newPendingSection = document.createElement('div');
+    newPendingSection.innerHTML = '<h6>New Pending Materials</h6>';
+    
+    // Check all items for pending status
+    for (const itemId in currentItemsState) {
+        const item = currentItemsState[itemId];
+        
+        if (item.status !== 'completed') {
+            hasNewPending = true;
+            const pendingQty = item.ordered_quantity - item.received_quantity;
+            
+            const pendingItem = document.createElement('div');
+            pendingItem.className = 'mb-2';
+            pendingItem.innerHTML = `
+                <strong>${item.material_name}</strong> - ${item.spec || 'N/A'} (${item.brand || 'N/A'})<br>
+                Ordered: ${item.ordered_quantity} ${item.unit}, Received: ${item.received_quantity} ${item.unit}, Pending: ${pendingQty} ${item.unit}
+            `;
+            newPendingSection.appendChild(pendingItem);
+        }
+    }
+    
+    if (hasNewPending) {
+        // Remove any existing new pending section before adding the updated one
+        const existingNewPending = document.querySelector('#pendingMaterialsList > div:not(:first-child)');
+        if (existingNewPending && !existingNewPending.classList.contains('existing-pending')) {
+            existingNewPending.remove();
+        }
+        
+        pendingList.appendChild(newPendingSection);
+        document.getElementById('pendingMaterialsSection').style.display = 'block';
+    } else if (pendingList.children.length <= 1) {
+        // If no pending materials at all, hide the section
+        document.getElementById('pendingMaterialsSection').style.display = 'none';
+    }
+}
+</script> 
+{% endblock %}

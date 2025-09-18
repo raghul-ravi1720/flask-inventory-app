@@ -1,0 +1,289 @@
+{% extends "base.html" %}
+
+{% block title %}Edit Material Inward - Inventory Management System{% endblock %}
+
+{% block content %}
+<div class="container mt-4">
+    <h2>Edit Material Inward</h2>
+    
+    {% if error %}
+    <div class="alert alert-danger">{{ error }}</div>
+    {% endif %}
+    
+    <form method="post" action="/material_inward/edit/{{ inward.id }}" id="materialInwardForm">
+        <div class="card mb-4">
+            <div class="card-header bg-primary text-white">
+                <h5 class="mb-0">Material Inward Details</h5>
+            </div>
+            <div class="card-body">
+                <div class="row mb-3">
+                    <div class="col-md-3">
+                        <label class="form-label">PO Number</label>
+                        <input type="text" class="form-control" value="{{ inward.po_no }}" readonly>
+                        <input type="hidden" name="po_no" value="{{ inward.po_no }}">
+                    </div>
+                    <div class="col-md-3">
+                        <label class="form-label">Dealer Name</label>
+                        <input type="text" name="dealer_name" class="form-control" value="{{ inward.dealer_name }}" required>
+                    </div>
+                    <div class="col-md-3">
+                        <label class="form-label">PO Date</label>
+                        <input type="date" name="po_date" class="form-control" value="{{ inward.po_date.strftime('%Y-%m-%d') if inward.po_date }}">
+                    </div>
+                    <div class="col-md-3">
+                        <label class="form-label">Inward Date</label>
+                        <input type="date" name="date_of_inward" class="form-control" value="{{ inward.date_of_inward.strftime('%Y-%m-%d') if inward.date_of_inward }}" required>
+                    </div>
+                </div>
+
+                <div class="row mb-3">
+                    <div class="col-md-3">
+                        <label class="form-label">Cost</label>
+                        <input type="number" name="cost" class="form-control" step="0.01" value="{{ inward.cost or 0 }}">
+                    </div>
+                    <div class="col-md-3">
+                        <label class="form-label">Bill Number</label>
+                        <input type="text" name="bill_no" class="form-control" value="{{ inward.bill_no or '' }}">
+                    </div>
+                    <div class="col-md-3">
+                        <label class="form-label">Bill Date</label>
+                        <input type="date" name="bill_date" class="form-control" value="{{ inward.bill_date.strftime('%Y-%m-%d') if inward.bill_date }}">
+                    </div>
+                    <div class="col-md-3 mb-3">
+                        <label class="form-label">Payment Method</label>
+                        <select name="payment_method" class="form-select" required>
+                            <option value="">Select payment method</option>
+                            <option value="Cash" {% if inward.payment_method == 'Cash' %}selected{% endif %}>Cash</option>
+                            <option value="Bank Transfer" {% if inward.payment_method == 'Bank Transfer' %}selected{% endif %}>Bank Transfer</option>
+                            <option value="Cheque" {% if inward.payment_method == 'Cheque' %}selected{% endif %}>Cheque</option>
+                            <option value="Credit" {% if inward.payment_method == 'Credit' %}selected{% endif %}>Credit</option>
+                        </select>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- In edit_material_inward_enhanced.html -->
+        <!-- PO Items Section -->
+        <div class="card mb-4">
+            <div class="card-header bg-info text-white">
+                <h5 class="mb-0">PO Items</h5>
+            </div>
+            <div class="card-body">
+                <table class="table" id="poItemsTable">
+                    <thead>
+                        <tr>
+                            <th>Received</th>
+                            <th>Material</th>
+                            <th>Spec</th>
+                            <th>Brand</th>
+                            <th>Ordered Qty</th>
+                            <th>Previously Received</th>
+                            <th>Unit</th>
+                            <th>Additional Received</th>
+                            <th>Full Qty</th>
+                            <th>Status</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        {% for item in po.items %}
+                        {% set received_item = inward.items|selectattr("po_item_id", "equalto", item.id)|first %}
+                        <tr>
+                            <td>
+                                <input type="checkbox" name="items[{{ item.id }}][received]" class="material-received" {% if received_item and received_item.quantity_received > 0 %}checked{% endif %}>
+                                <input type="hidden" name="items[{{ item.id }}][id]" value="{{ item.id }}">
+                            </td>
+                            <td>{{ item.material_name }}</td>
+                            <td>{{ item.spec or 'N/A' }}</td>
+                            <td>{{ item.brand or 'N/A' }}</td>
+                            <td>{{ item.quantity }}</td>
+                            <td>{{ received_item.quantity_received if received_item else 0 }}</td>
+                            <td>{{ item.unit }}</td>
+                            <td>
+                                <input type="number" name="items[{{ item.id }}][additional_received]" class="form-control additional-quantity" min="0" max="{{ item.quantity - (received_item.quantity_received if received_item else 0) }}" value="0" {% if not received_item or received_item.quantity_received == 0 %}disabled{% endif %}>
+                            </td>
+                            <td>
+                                <input type="checkbox" name="items[{{ item.id }}][full_quantity]" class="full-quantity" 
+                                    {% if received_item and received_item.quantity_received >= item.quantity %}checked{% endif %}>
+                            </td>
+                            <td class="status-cell">
+                                {% if received_item %}
+                                    {% if received_item.quantity_received >= item.quantity %}
+                                        Completed
+                                    {% elif received_item.quantity_received > 0 %}
+                                        Partial
+                                    {% else %}
+                                        Pending
+                                    {% endif %}
+                                {% else %}
+                                    Pending
+                                {% endif %}
+                            </td>
+                        </tr>
+                        {% endfor %}
+                    </tbody>
+                </table>
+            </div>
+        </div>
+
+        <!-- Pending Materials Section -->
+        {% if inward.pending_materials_list %}
+        <div class="card mb-4">
+            <div class="card-header bg-warning text-dark">
+                <h5 class="mb-0">Pending Materials</h5>
+            </div>
+            <div class="card-body">
+                <div class="table-responsive">
+                    <table class="table table-striped">
+                        <thead>
+                            <tr>
+                                <th>Material</th>
+                                <th>Spec</th>
+                                <th>Brand</th>
+                                <th>Ordered Qty</th>
+                                <th>Received Qty</th>
+                                <th>Pending Qty</th>
+                                <th>Unit</th>
+                                <th>Resolve</th>
+                                <th>Quantity to Resolve</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            {% for pending in inward.pending_materials_list %}
+                            {% if pending.status != 'resolved' %}
+                            <tr>
+                                <td>{{ pending.material_name }}</td>
+                                <td>{{ pending.spec or 'N/A' }}</td>
+                                <td>{{ pending.brand or 'N/A' }}</td>
+                                <td>{{ pending.ordered_quantity }}</td>
+                                <td>{{ pending.received_quantity }}</td>
+                                <td>{{ pending.pending_quantity }}</td>
+                                <td>{{ pending.unit }}</td>
+                                <td>
+                                    <input type="checkbox" name="resolve_pending[]" value="{{ pending.id }}">
+                                </td>
+                                <td>
+                                    <input type="number" name="resolve_quantity[{{ pending.id }}]" class="form-control" min="1" max="{{ pending.pending_quantity }}" value="{{ pending.pending_quantity }}">
+                                </td>
+                            </tr>
+                            {% endif %}
+                            {% endfor %}
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+        </div>
+        {% endif %}
+
+        <!-- Resolution History -->
+        {% if inward.resolution_history %}
+        <div class="card mb-4">
+            <div class="card-header bg-secondary text-white">
+                <h5 class="mb-0">Resolution History</h5>
+            </div>
+            <div class="card-body">
+                <div class="table-responsive">
+                    <table class="table table-striped">
+                        <thead>
+                            <tr>
+                                <th>Date</th>
+                                <th>Material</th>
+                                <th>Bill No</th>
+                                <th>Quantity Resolved</th>
+                                <th>Notes</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            {% for resolution in inward.resolution_history %}
+                            <tr>
+                                <td>{{ resolution.resolution_date.strftime('%Y-%m-%d') if resolution.resolution_date }}</td>
+                                <td>{{ resolution.pending_material.material_name }}</td>
+                                <td>{{ resolution.resolution_bill_no or 'N/A' }}</td>
+                                <td>{{ resolution.resolved_quantity }}</td>
+                                <td>{{ resolution.notes or 'N/A' }}</td>
+                            </tr>
+                            {% endfor %}
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+        </div>
+        {% endif %}
+
+        <button type="submit" class="btn btn-warning">Update Material Inward</button>
+        <a href="/material_inward" class="btn btn-secondary">Cancel</a>
+    </form>
+</div>
+
+<script>
+document.addEventListener('DOMContentLoaded', function() {
+    // Add event listeners to checkboxes
+    document.querySelectorAll('.material-received').forEach(checkbox => {
+        checkbox.addEventListener('change', function() {
+            const row = this.closest('tr');
+            const quantityInput = row.querySelector('.additional-quantity');
+            const fullQuantityCheckbox = row.querySelector('.full-quantity');
+            const statusCell = row.querySelector('.status-cell');
+            const previouslyReceived = parseInt(row.querySelector('td:nth-child(6)').textContent);
+            const orderedQty = parseInt(row.querySelector('td:nth-child(5)').textContent);
+            
+            if (this.checked) {
+                quantityInput.disabled = false;
+                quantityInput.value = orderedQty - previouslyReceived;
+                fullQuantityCheckbox.checked = true;
+                statusCell.textContent = 'Completed';
+            } else {
+                quantityInput.disabled = true;
+                quantityInput.value = 0;
+                fullQuantityCheckbox.checked = false;
+                statusCell.textContent = 'Pending';
+            }
+        });
+    });
+    
+    // Add event listeners to quantity inputs
+    document.querySelectorAll('.additional-quantity').forEach(input => {
+        input.addEventListener('change', function() {
+            const row = this.closest('tr');
+            const previouslyReceived = parseInt(row.querySelector('td:nth-child(6)').textContent);
+            const orderedQty = parseInt(row.querySelector('td:nth-child(5)').textContent);
+            const value = parseInt(this.value) || 0;
+            const totalReceived = previouslyReceived + value;
+            const statusCell = row.querySelector('.status-cell');
+            const fullQuantityCheckbox = row.querySelector('.full-quantity');
+            const receivedCheckbox = row.querySelector('.material-received');
+            
+            if (totalReceived === orderedQty) {
+                statusCell.textContent = 'Completed';
+                fullQuantityCheckbox.checked = true;
+                receivedCheckbox.checked = true;
+            } else if (totalReceived > 0) {
+                statusCell.textContent = 'Partial';
+                fullQuantityCheckbox.checked = false;
+                receivedCheckbox.checked = true;
+            } else {
+                statusCell.textContent = 'Pending';
+                fullQuantityCheckbox.checked = false;
+                receivedCheckbox.checked = false;
+            }
+        });
+    });
+    
+    // Add event listeners to full quantity checkboxes
+    document.querySelectorAll('.full-quantity').forEach(checkbox => {
+        checkbox.addEventListener('change', function() {
+            if (this.checked) {
+                const row = this.closest('tr');
+                const quantityInput = row.querySelector('.additional-quantity');
+                const previouslyReceived = parseInt(row.querySelector('td:nth-child(6)').textContent);
+                const orderedQty = parseInt(row.querySelector('td:nth-child(5)').textContent);
+                quantityInput.value = orderedQty - previouslyReceived;
+                quantityInput.disabled = false;
+                row.querySelector('.material-received').checked = true;
+                row.querySelector('.status-cell').textContent = 'Completed';
+            }
+        });
+    });
+});
+</script>
+{% endblock %}
